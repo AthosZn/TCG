@@ -20,12 +20,12 @@ class PlayerState ():
     def __init__ (self):
         self.hand = []
         self.graveyard = []
+        self.grave_top = None
         self.creatures = []
         self.enchants = []
 
 self_state = PlayerState ()
 opp_state = PlayerState ()
-opponent_state = PlayerState ()
 CONNECTIONS = []
 
 def set_conn (conn):
@@ -45,9 +45,7 @@ class EchoClient(LineReceiver):
 
         if obj["from_self"] :
             self_state.hand = self._up_list (obj["hand"], self_state.hand)
-            self_state.creatures = self._up_list (obj["creatures"], self_state.creatures)
-            self_state.enchants = self._up_list (obj["enchants"], self_state.enchants)
-            self_state.graveyard = self._up_list (obj["graveyard"], self_state.graveyard)
+            player = self_state
         else :
             for card in opp_state.hand :
                 card.erase ()
@@ -55,10 +53,10 @@ class EchoClient(LineReceiver):
                     SimpleSprite ("Carte_dos_mini.png", 1000, 5 + 41 * i)
                     for i in range(obj["hand"]) 
                     ]
-            opp_state.creatures = self._up_list (obj["creatures"], opp_state.creatures)
-            opp_state.enchants = self._up_list (obj["enchants"], opp_state.enchants)
-            opp_state.graveyard = self._up_list (obj["graveyard"], opp_state.graveyard)
-
+            player = opp_state
+        player.creatures = self._up_list (obj["creatures"], player.creatures)
+        player.enchants = self._up_list (obj["enchants"], player.enchants)
+        player.graveyard = self._up_list (obj["graveyard"], player.graveyard) 
     def _up_list (self, data, card_list):
         for card in card_list :
             card.erase()
@@ -178,7 +176,7 @@ ALL_SPRITES = pygame.sprite.OrderedUpdates(())
 
 class SimpleSprite (pygame.sprite.Sprite):
     """ Simple sprites refreshed every frame """
-    def __init__(self, image_name, x=0, y=0):
+    def __init__(self, image_name, x=0, y=0, flipped=False):
         pygame.sprite.Sprite.__init__(self) #call Sprite initializer
         self.image, self.rect = load_image(image_name)
         ALL_SPRITES.add (self)
@@ -222,7 +220,6 @@ class DescriptionText ():
                 self.sprites[i].set_text (word_list[i]) 
             else:
                 self.sprites[i].set_text ("") 
-
 DESC_TEXT = DescriptionText ()
 
 class Card (SimpleSprite):
@@ -231,7 +228,7 @@ class Card (SimpleSprite):
         SimpleSprite.__init__(self, sprite_name)
         self.data = all_cards [card_index] 
 
-        self.text_sprite = TextSprite (self.data.name, 10, (0,0,0))
+        self.text_sprite = TextSprite (self.data.name, 9, (0,0,0))
         self.cost_sprite = TextSprite (self.data.cost, 12, (0,0,0))
 
         #screen = pygame.display.get_surface()
@@ -293,34 +290,44 @@ def card_factory (card_index):
         return Enchant (card_index)
     return Sorcery (card_index)
 
-class Health(SimpleSprite):
+class Gauge(SimpleSprite):
     """Handles health points and behavior"""
-    def __init__(self):
-        SimpleSprite.__init__(self, "Health.png")
-        self.max_amount = 20 
-        self.current_amount = 20 
+    def __init__(self, bg, initial_amount, x=0, y=0):
+        SimpleSprite.__init__(self, bg, x, y)
+        self.max_amount = initial_amount 
+        self.current_amount = initial_amount 
         self.text_sprite = TextSprite ("%d/%d" % 
                 (self.current_amount, self.max_amount), 15, (0,0,0))
+        self.text_sprite.rect.center = self.rect.center
 
     def _text_up(self):
         text = str("%d/%d" % 
                 (self.current_amount, self.max_amount))
         self.text_sprite.set_text (text)
+        self.text_sprite.rect.center = self.rect.center
+
 
     def update (self):
         self._text_up()
         self.text_sprite.update()
 
-    def go_to (self, x, y):
-        self.rect.x = x
-        self.rect.y = y
 
-        self.text_sprite.rect.center = self.rect.center
+class UI_Sprites ():
+    def __init__ (self):
+        self.mana = Gauge ("Mana.png",2, 220, 595)
+        self.opp_mana = Gauge ("Mana.png",2, 220, 145)
 
-screen = pygame.display.set_mode((1280, 800))
+        self.health = Gauge ("Health.png",20, 150, 595)
+        self.opp_health = Gauge ("Health.png",20, 150, 145)
 
-def game_loop ():
-    reactor.callLater(1./60, game_loop)
+        self.deck = SimpleSprite ("Carte_dos.png", 5, 580)
+        self.opp_deck = SimpleSprite ("Carte_dos.png", 5, 5)
+
+        self.hand_border = SimpleSprite ("Main.png", 995, 570)
+        self.opp_hand_border = SimpleSprite ("Main.png", 995, 5)
+
+def game_loop (UI):
+    reactor.callLater(1./60, game_loop, UI)
     for i in range (min (5, len (self_state.hand))):
         card = self_state.hand[i]
         card.go_to (1000, 575 + 41 * i)
@@ -332,14 +339,16 @@ def game_loop ():
     for card in self_state.enchants:
         card.go_to (700, 575 + 41 * self_state.enchants.index(card))
     for card in self_state.graveyard:
-        card.go_to (300, 575 + 41 * self_state.graveyard.index (card))
-
+        card.go_to (140, 655) # Stack the cards. 
+                              # TODO: only draw top card would perform better
+        
+    # Same as above with different positions
     for card in opp_state.creatures:
         card.go_to (500, 10 + 41 * opp_state.creatures.index(card))
     for card in opp_state.enchants:
         card.go_to (700, 10 + 41 * opp_state.enchants.index(card))
     for card in opp_state.graveyard:
-        card.go_to (300, 10 + 41 * opp_state.graveyard.index (card))
+        card.go_to (140, 10) 
         
     ALL_SPRITES.update()
     #Draw Everything
@@ -356,12 +365,17 @@ def game_loop ():
             reactor.stop()
         elif event.type == MOUSEBUTTONDOWN:
             for card in self_state.hand :
-               if card.rect.collidepoint(pygame.mouse.get_pos()):
-                   card.play ()
+                toprect = card.rect.copy ()
+                toprect.h = 41
+                if toprect.collidepoint(pygame.mouse.get_pos()):
+                    card.play ()
+            rect = UI.deck.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                CONNECTIONS[0].sendLine("[\"draw\"]")
         elif event.type == MOUSEBUTTONUP:
             pass
 
-
+screen = pygame.display.set_mode((1280, 800))
 
 def main():
     """this function is called when the program starts.
@@ -381,15 +395,10 @@ def main():
 
 #Prepare Game Objects
     #clock = pygame.time.Clock()
-    health = Health ()
-    health.go_to (400, 400)
-    deck1 = SimpleSprite ("Carte_dos.png", 5, 5)
-    deck2 = SimpleSprite ("Carte_dos.png", 5, 575)
-    hand_border = SimpleSprite ("Main.png", 995, 5)
-    hand_border2 = SimpleSprite ("Main.png", 995, 570)
     factory = EchoClientFactory()
     reactor.connectTCP('localhost', 8000, factory)
-    game_loop ()
+    UI = UI_Sprites ()
+    game_loop (UI)
     reactor.run ()
 
 #Game Over

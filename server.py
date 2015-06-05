@@ -81,6 +81,7 @@ class PubProtocol(basic.LineReceiver):
                 c.sendLine(self.state.visible_state())
 
     def lineReceived(self, line):
+        print line
         obj = json.loads (line)
         func = self.player_actions[obj[0]]
         func (*obj[1:])
