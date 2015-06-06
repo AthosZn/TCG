@@ -1,4 +1,5 @@
 import json
+import random
 
 from twisted.internet import reactor, protocol, endpoints
 from twisted.protocols import basic
@@ -17,7 +18,7 @@ class PlayerState ():
         self.cur_mana = 2
         self.max_mana = 2
         self.hand = [0,1,2,3,3] 
-        self.deck = [4] * 50 
+        self.deck = [random.randint(0,7) for i in range (55)] 
         self.creatures = []
         self.enchants = []
         self.graveyard = []
@@ -44,7 +45,13 @@ class PlayerState ():
             self.enchants.append (card)
         else:
             self.graveyard.append (card)
+        if data.cost != "X":
+            self.cur_mana -= int (data.cost)
         self.hand.remove (card)
+
+    def grow_mana (self):
+        self.max_mana = min (self.max_mana + 1, 10)
+        self.cur_mana = self.max_mana
 
     def visible_state (self, from_self=False):
         vis_state = self.__dict__.copy()
@@ -54,6 +61,12 @@ class PlayerState ():
             vis_state["hand"] = len (vis_state["hand"]) 
         del vis_state["deck"]
         return json.dumps(vis_state)
+
+    def hp_plus (self):
+        self.health += 1
+
+    def hp_minus (self):
+        self.health -= 1
 
 class PubProtocol(basic.LineReceiver):
     def __init__(self, factory):
@@ -67,9 +80,14 @@ class PubProtocol(basic.LineReceiver):
                 "play" : self.state.play,
                 "draw" : self.state.draw,
                 "discard" : self.state.discard,
-                "kill" : self.state.kill
+                "kill" : self.state.kill,
+                "grow_mana" : self.state.grow_mana,
+                "hp_plus" : self.state.hp_plus,
+                "hp_minus" : self.state.hp_minus
                 }
         self._send_update ()
+        for client in self.factory.clients:
+            client._send_update ()
 
     def connectionLost(self, reason):
         self.factory.clients.remove(self)

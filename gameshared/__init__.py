@@ -13,6 +13,7 @@ CardData("3", "Refreshing winds", "Each time you play a sorcery, draw a card.", 
 CardData("2", "King Brandt", "Pay 2 mana: Target creature gains +1 strength until the end of turn.", 2),
 CardData("3", "Mercenary", "During a creature untap phase, you must pay 1 mana to untap the mercenary or leave it tapped.", 3),
 CardData("X", "Blast", "Destroy target creature of strength X or less."),
+CardData("6", "Doom's Day", "Destroy all creatures and enchants."),
 CardData("1", "Blue Warden", "If a creature you control is destroyed by a spell or an ability, draw a card.", 1),
 CardData("1", "Green Warden", "Gain 2 life every time a creature is played.", 1),
 CardData("3", "Resilience", "At the end of your turn, if you have less than 10 life, gain 1 life.", None , True)

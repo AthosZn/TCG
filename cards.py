@@ -23,6 +23,9 @@ class PlayerState ():
         self.grave_top = None
         self.creatures = []
         self.enchants = []
+        self.cur_mana = 2
+        self.max_mana = 2
+        self.health = 20
 
 self_state = PlayerState ()
 opp_state = PlayerState ()
@@ -50,13 +53,17 @@ class EchoClient(LineReceiver):
             for card in opp_state.hand :
                 card.erase ()
             opp_state.hand = [
-                    SimpleSprite ("Carte_dos_mini.png", 1000, 5 + 41 * i)
+                    SimpleSprite ("Carte_dos_mini.png", 1000 + 140 * (i % 2), 
+                                                        5 + 41 * (i / 2))
                     for i in range(obj["hand"]) 
                     ]
             player = opp_state
         player.creatures = self._up_list (obj["creatures"], player.creatures)
         player.enchants = self._up_list (obj["enchants"], player.enchants)
         player.graveyard = self._up_list (obj["graveyard"], player.graveyard) 
+        player.max_mana = obj["max_mana"]
+        player.cur_mana = obj["cur_mana"]
+        player.health = obj["health"]
     def _up_list (self, data, card_list):
         for card in card_list :
             card.erase()
@@ -239,10 +246,6 @@ class Card (SimpleSprite):
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             DESC_TEXT.update ( self.data.desc_text )
 
-    def play (self):
-        CONNECTIONS[0].sendLine ("[\"play\", %d]" % self_state.hand.index(self))
-        #self_state.hand.remove (self)
-
     def go_to (self, x, y):
         self.rect.x = x
         self.rect.y = y
@@ -279,9 +282,6 @@ class Enchant (Card):
 class Sorcery (Card):
     def __init__ (self, card_index):
         Card.__init__ (self, "Carte_face.png", card_index)
-
-    def play (self):
-        Card.play (self)
 
 def card_factory (card_index):
     if all_cards [card_index].creature_strength :
@@ -320,35 +320,48 @@ class UI_Sprites ():
         self.health = Gauge ("Health.png",20, 150, 595)
         self.opp_health = Gauge ("Health.png",20, 150, 145)
 
-        self.deck = SimpleSprite ("Carte_dos.png", 5, 580)
+        self.deck = SimpleSprite ("Carte_dos.png", 5, 570)
         self.opp_deck = SimpleSprite ("Carte_dos.png", 5, 5)
 
-        self.hand_border = SimpleSprite ("Main.png", 995, 570)
-        self.opp_hand_border = SimpleSprite ("Main.png", 995, 5)
+        #self.hand_border = SimpleSprite ("Main.png", 995, 570)
+        #self.opp_hand_border = SimpleSprite ("Main.png", 995, 5)
+
+        #Action buttons
+        self.kill_button = SimpleSprite ("kill.png", 995, 370)
+        self.kill = False
+        self.mana_button = SimpleSprite ("grow_mana.png", 1060, 370)
+        self.discard_button = SimpleSprite ("discard.png", 1190, 370)
+        self.discard = False
+        self.hp_plus = SimpleSprite ("hpplus.png", 1125, 370)
+        self.hp_minus = SimpleSprite ("hpminus.png", 1125, 400)
 
 def game_loop (UI):
     reactor.callLater(1./60, game_loop, UI)
-    for i in range (min (5, len (self_state.hand))):
+    for i in range (len (self_state.hand)):
         card = self_state.hand[i]
-        card.go_to (1000, 575 + 41 * i)
-    for i in range (5, max (5, len (self_state.hand))):
-        card = self_state.hand[i]
-        card.go_to (1135, 370 + 41 * i)
+        card.go_to (1000 + 135 * (i % 2), 480 + 41 * (i/2))
     for card in self_state.creatures:
-        card.go_to (500, 575 + 41 * self_state.creatures.index(card))
+        i = self_state.creatures.index(card)
+        card.go_to (300 + 140 * (i % 2), 480 + 41 * (i/2))
     for card in self_state.enchants:
-        card.go_to (700, 575 + 41 * self_state.enchants.index(card))
+        i = self_state.enchants.index(card)
+        card.go_to (600 + 140 * (i % 2), 480 + 41 * (i/2))
     for card in self_state.graveyard:
-        card.go_to (140, 655) # Stack the cards. 
+        card.go_to (145, 655) # Stack the cards. 
                               # TODO: only draw top card would perform better
+    UI.health.current_amount = self_state.health
+    UI.mana.current_amount = self_state.cur_mana
+    UI.mana.max_amount = self_state.max_mana
         
     # Same as above with different positions
     for card in opp_state.creatures:
-        card.go_to (500, 10 + 41 * opp_state.creatures.index(card))
+        i = opp_state.creatures.index(card)
+        card.go_to (300 + 140 * (i % 2), 10 + 41 * (i/2))
     for card in opp_state.enchants:
-        card.go_to (700, 10 + 41 * opp_state.enchants.index(card))
+        i = opp_state.enchants.index(card)
+        card.go_to (600 + 140 * (i % 2), 10 + 41 * (i/2))
     for card in opp_state.graveyard:
-        card.go_to (140, 10) 
+        card.go_to (145, 10) 
         
     ALL_SPRITES.update()
     #Draw Everything
@@ -364,14 +377,41 @@ def game_loop (UI):
             pygame.quit()
             reactor.stop()
         elif event.type == MOUSEBUTTONDOWN:
-            for card in self_state.hand :
-                toprect = card.rect.copy ()
-                toprect.h = 41
-                if toprect.collidepoint(pygame.mouse.get_pos()):
-                    card.play ()
+            for card in reversed(self_state.hand) :
+                #toprect = card.rect.copy ()
+                #toprect.h = 41
+                if card.rect.collidepoint(pygame.mouse.get_pos()):
+                    if UI.discard :
+                        CONNECTIONS[0].sendLine("[\"discard\", %d]" % self_state.hand.index (card))
+                    else:
+                        CONNECTIONS[0].sendLine ("[\"play\", %d]" % self_state.hand.index(card))
+                    break
+            UI.discard = False
             rect = UI.deck.rect
             if rect.collidepoint(pygame.mouse.get_pos()):
                 CONNECTIONS[0].sendLine("[\"draw\"]")
+            rect = UI.hp_minus.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                CONNECTIONS[0].sendLine("[\"hp_minus\"]")
+            rect = UI.hp_plus.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                CONNECTIONS[0].sendLine("[\"hp_plus\"]")
+            rect = UI.mana_button.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                CONNECTIONS[0].sendLine("[\"grow_mana\"]")
+            if UI.kill :
+                for card in self_state.creatures :
+                    toprect = card.rect.copy ()
+                    toprect.h = 41
+                    if toprect.collidepoint(pygame.mouse.get_pos()):
+                        CONNECTIONS[0].sendLine("[\"kill\", %d]" % self_state.creatures.index (card))
+                UI.kill = False
+            rect = UI.kill_button.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                UI.kill = True
+            rect = UI.discard_button.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                UI.discard = True
         elif event.type == MOUSEBUTTONUP:
             pass
 
