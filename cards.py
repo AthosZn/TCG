@@ -334,6 +334,8 @@ class UI_Sprites ():
         self.discard = False
         self.hp_plus = SimpleSprite ("hpplus.png", 1125, 370)
         self.hp_minus = SimpleSprite ("hpminus.png", 1125, 400)
+        self.mana_plus = SimpleSprite ("manaplus.png", 1155, 370)
+        self.mana_minus = SimpleSprite ("manaminus.png", 1155, 400)
 
 def game_loop (UI):
     reactor.callLater(1./60, game_loop, UI)
@@ -396,6 +398,12 @@ def game_loop (UI):
             rect = UI.hp_plus.rect
             if rect.collidepoint(pygame.mouse.get_pos()):
                 CONNECTIONS[0].sendLine("[\"hp_plus\"]")
+            rect = UI.mana_minus.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                CONNECTIONS[0].sendLine("[\"mana_minus\"]")
+            rect = UI.mana_plus.rect
+            if rect.collidepoint(pygame.mouse.get_pos()):
+                CONNECTIONS[0].sendLine("[\"mana_plus\"]")
             rect = UI.mana_button.rect
             if rect.collidepoint(pygame.mouse.get_pos()):
                 CONNECTIONS[0].sendLine("[\"grow_mana\"]")

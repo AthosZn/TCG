@@ -17,8 +17,8 @@ class PlayerState ():
         self.health = 20
         self.cur_mana = 2
         self.max_mana = 2
-        self.hand = [0,1,2,3,3] 
-        self.deck = [random.randint(0,7) for i in range (55)] 
+        self.hand = [random.randint(0,len(all_cards)) for i in range (5)] 
+        self.deck = [random.randint(0,len(all_cards)) for i in range (55)] 
         self.creatures = []
         self.enchants = []
         self.graveyard = []
@@ -46,7 +46,7 @@ class PlayerState ():
         else:
             self.graveyard.append (card)
         if data.cost != "X":
-            self.cur_mana -= int (data.cost)
+            self.cur_mana -= max (int (data.cost), 0)
         self.hand.remove (card)
 
     def grow_mana (self):
@@ -68,6 +68,12 @@ class PlayerState ():
     def hp_minus (self):
         self.health -= 1
 
+    def mana_plus (self):
+        self.cur_mana += 1
+
+    def mana_minus (self):
+        self.cur_mana -= 1
+
 class PubProtocol(basic.LineReceiver):
     def __init__(self, factory):
         self.factory = factory
@@ -83,7 +89,9 @@ class PubProtocol(basic.LineReceiver):
                 "kill" : self.state.kill,
                 "grow_mana" : self.state.grow_mana,
                 "hp_plus" : self.state.hp_plus,
-                "hp_minus" : self.state.hp_minus
+                "hp_minus" : self.state.hp_minus,
+                "mana_plus" : self.state.mana_plus,
+                "mana_minus" : self.state.mana_minus
                 }
         self._send_update ()
         for client in self.factory.clients:
