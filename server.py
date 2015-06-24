@@ -38,8 +38,7 @@ class PlayerState ():
 
     def play (self, hand_index):
         card = self.hand[hand_index]
-        data = all_cards [card]
-        if data.creature_strength:
+        if card.creature_strength:
             self.creatures.append (card)
         elif data.is_enchant:
             self.enchants.append (card)
