@@ -1,49 +1,47 @@
 <!DOCTYPE html>
 <html>
 <body>
-<script>
-    function sendHand () {
-        var hnum = document.getElementById("handnum").value;
-        var gid = document.getElementById("gameid").value;
-        var action = document.getElementById("action").value;
-        alert ("handnum="+hnum+"&gameid="+gid+"&action="+action);
-        var xmlhttp = new XMLHttpRequest(); 
-        xmlhttp.open("POST","http://localhost:8888/play",true);
-        xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-        xmlhttp.send("handnum="+hnum+"&gameid="+gid+"&action="+action);
-    }
-</script> 
 
-<h1>Getting server updates</h1>
-<div id="result"></div>
-<div id="respform"></div>
-<div id="hand"></div>
-<div id="creatures"></div>
-<div id="items"></div>
-<div id="graveyard"></div>
-<div id="opp_status"></div>
-
-<script>
-    var source = new WebSocket("ws://localhost:8888/socket");
-    //var parse_data = /([0-9]+)/;
-    //var res = parse_data.exec(event.data);
-    source.onmessage = function(event) {
-    var parse_json = JSON.parse (event.data)
-    
-    document.getElementById("hand").innerHTML = "<table style=\"width:100%\">";
-    for (item in parse_json.hand){
-        document.getElementById("hand").innerHTML += "<tr>";
-        document.getElementById("hand").innerHTML += "<td>" + parse_json.hand[item].name + "</td>";
-        document.getElementById("hand").innerHTML += "<td>" + parse_json.hand[item].card_type + "</td>";
-        document.getElementById("hand").innerHTML += "<td>" + parse_json.hand[item].cost + "</td>";
-        document.getElementById("hand").innerHTML += "<td>" + parse_json.hand[item].desc_text + "</td>";
-        document.getElementById("hand").innerHTML += "</tr>";
+<h1>Twisted Card Game</h1>
+<div style="width: 100%;">
+    <div style="float:left; width: 50%">
+        <div style="clear:both"></div>
+        <div id="pstatus"></div>
+        Hand:
+        <div id="hand"></div>
+        <br>
+        Creatures:
+        <div id="creatures"></div>
+        <br>
+        Items:
+        <div id="items"></div>
+        <br>
+        Graveyard:
+        <div id="graveyard"></div>
+        <br>
+    </div>
+    <div style="float:left;">
+        <div id="opp_status"></div>
+        Opponent creatures:
+        <div id="opp_creatures"></div>
+        <br>
+        Opponent items:
+        <div id="opp_items"></div>
+        <br>
+        Opponent graveyard:
+        <div id="opp_graveyard"></div>
+    </div>
+</div>
+<style>
+    table {
+        border-collapse: collapse;
     }
-    document.getElementById("hand").innerHTML += "</table>"
-    //document.getElementById("creatures").innerHTML = parse_json.creatures + "<br>";
-    //document.getElementById("items").innerHTML = parse_json.items + "<br>";
-    //document.getElementById("graveyard").innerHTML = parse_json.items + "<br>";
-};
+
+    table, td, th {
+            border: 1px solid black;
+        }
+</style>
+<script src="sse.js">
 </script>
 
 </body>
