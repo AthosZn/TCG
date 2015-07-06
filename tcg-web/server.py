@@ -17,13 +17,13 @@ class PlayerState ():
         self.health = 20
         self.cur_mana = 2
         self.max_mana = 2
+        self.creatures = []
+        self.items = []
+        self.graveyard = []
         self.hand = [play_card_factory (random.randint (0, len (all_card_data)-1), 
             game_state, self) for i in range (5)]
         self.deck = [play_card_factory (random.randint (0, len (all_card_data)-1), 
             game_state, self) for i in range (55)]
-        self.creatures = []
-        self.items = []
-        self.graveyard = []
 
     def draw (self):
         self.hand.append (self.deck.pop ())
@@ -42,43 +42,52 @@ class PlayerState ():
         self.max_mana = min (self.max_mana + 1, 10)
         self.cur_mana = self.max_mana
 
-    def visible_state (self, from_self=False):
-        vis_state = self.__dict__.copy()
-        vis_state['creatures'] = [ c.get_card_data() for c in self.creatures ]
-        vis_state['hand'] = [ c.get_card_data() for c in self.hand ]
-        vis_state['graveyard'] = [ c.get_card_data() for c in self.graveyard ]
-        vis_state['items'] = [ c.get_card_data() for c in self.items ]
-        
-        if not from_self:
-            # Deleting what shouldnt be visible
-            vis_state["hand"] = len (vis_state["hand"]) 
-        del vis_state["deck"]
+    def visible_state (self, from_self):
+        if from_self :
+            vis_state = {
+            'creatures' : [ c.get_card_data() for c in self.creatures ],
+            'hand' : [ c.get_card_data() for c in self.hand ], 
+            'graveyard' : [ c.get_card_data() for c in self.graveyard ],
+            'items' : [ c.get_card_data() for c in self.items ],
+            'health' : self.health,
+            'cur_mana' : self.cur_mana,
+            'max_mana' : self.max_mana
+            }
+        else :
+            vis_state = {
+            'opp_creatures' : [ c.get_card_data() for c in self.creatures ],
+            'opp_hand' : len ( self.hand ), 
+            'opp_graveyard' : [ c.get_card_data() for c in self.graveyard ],
+            'opp_items' : [ c.get_card_data() for c in self.items ],
+            'opp_health' : self.health,
+            'opp_cur_mana' : self.cur_mana,
+            'opp_max_mana' : self.max_mana
+            }
         return vis_state
 
 class Game ():
     """Regroup players and their respective connections and variables 
     representing the turn state"""
     def __init__ (self, connection1, connection2, gameid):
+        self.gameid = gameid
         self.player1 = PlayerState (self)
         self.player2 = PlayerState (self)
+        self.player1.opponent = self.player2
+        self.player2.opponent = self.player1
         self.connection1 = connection1
         self.connection2 = connection2
         self.on_trait = self.player2
-        self.gameid = gameid
         self.end_turn ()
 
     def dump_state (self,player_from):
-        if player_from == self.player1:
-            player_opp = self.player2
-        else :
-            player_opp = self.player1 
-        tempdict = { "pstate":  player_from.visible_state(True),
-                     "oppstate": player_opp.visible_state(),
+        tempdict = { "self_state": player_from.visible_state(True),
+                     "opp_state": player_from.opponent.visible_state(False),
                      "on_trait": self.on_trait==player_from,
                      "attackers": self.attackers or [],
                      "blockers": self.blockers or [],
                      "get_killed": self.get_killed,
-                     "gid": self.gameid
+                     "gid": self.gameid,
+                     "get_target": self.get_target
                 }
         return json.dumps(tempdict)
 
@@ -86,18 +95,15 @@ class Game ():
         self.connection1.write_message(self.dump_state(self.player1))
         self.connection2.write_message(self.dump_state(self.player2))
 
-    def require_target (self, card_type):
-        if self.on_trait == self.player1 :
-            self.connection1.write_message ("{require_target:"+card_type+"}")
-        else:
-            self.connection2.write_message ("{require_target:"+card_type+"}")
-
     def end_turn (self):
         self.attackers = None
         self.blockers = None
         self.on_block = None
         self.get_killed = None
-        pub.sendMessage ('end_turn_event')
+        self.get_target = None
+        self.pending_card = None
+        self.pending_active = None
+        pub.sendMessage (str(self.gameid)+'.end_turn_event')
         if self.on_trait == self.player1:
             self.on_trait = self.player2
         else:
@@ -114,7 +120,7 @@ class Game ():
         for i in range(len(self.on_trait.creatures)):
             if attackers[i]:
                 attacker_cards += [self.on_trait.creatures [i]]
-        pub.sendMessage ('attack_event', attackers=attacker_cards)
+        pub.sendMessage (str(self.gameid)+'.attack_event', attackers=attacker_cards)
            
         if self.on_block.creatures == []:
             for c in attacker_cards :
@@ -269,6 +275,8 @@ class GameCommandHandler (tornado.web.RequestHandler):
         game = GLOBALS['games'][gameid]
         if self.command (game):
             game.end_turn ()
+        else:
+            game.send_status ()
     def comnand (self, game):
         return True
 
@@ -278,7 +286,13 @@ class PlayHandler(GameCommandHandler):
             return False
         handnum = int(self.get_argument('handnum'))
         card = game.on_trait.hand[handnum]
-        return card.play ()
+        if not card.target_required:
+            return card.play ()
+        target_string = self.get_argument('target', default="[]")
+        if target_string == "[]":
+            game.get_target = card.target_required
+            game.pending_card = card
+        return False
 
 class GrowManaHandler(GameCommandHandler):
     def command(self, game):
@@ -298,38 +312,61 @@ class AttackHandler(GameCommandHandler):
     def command(self, game):
         if game.on_block : 
             return False
-        attackers = json.loads (self.get_argument('creatures'))
+        attackers = json.loads (self.get_argument('checkboxes'))
         if attackers == []:
             return False
         game.attack_phase (attackers)
         return False
 
+class SelectHandler(GameCommandHandler):
+    def command (self, game):
+        target_string = self.get_argument('checkboxes')
+        target_bools = json.loads (target_string)
+        for i in range (len (target_bools)):
+            if target_bools[i] and game.pending_card:
+                game.get_target = None
+                return game.pending_card.play (game.pending_card.get_target_list ()[i])
+            elif target_bools[i] and game.pending_active: 
+                game.get_target = None
+                return game.pending_active.activate (game.pending_active.get_target_active_list ()[i])
+
+
 class BlockHandler(GameCommandHandler):
     def command(self, game):
         if game.get_killed:
             return False
-        blockers = json.loads (self.get_argument('creatures'))
+        blockers = json.loads (self.get_argument('checkboxes'))
         game.block_phase (blockers)
         return False
 
 class KillHandler(GameCommandHandler):
     def command(self, game):
-        killed = json.loads (self.get_argument('creatures'))
+        killed = json.loads (self.get_argument('checkboxes'))
         return game.kill_phase (killed)
 
 class ActivateItemHandler(GameCommandHandler):
     def command(self, game):
         iid = int(self.get_argument('iid'))
-        game.on_trait.items[iid].activate ()
-        game.send_status ()
-        return False
+        card = game.on_trait.items[iid]
+        if not card.target_active_required:
+            return card.activate ()
+        target_string = self.get_argument('target', default="[]")
+        if target_string == "[]":
+            game.get_target = card.target_active_required
+            game.pending_active = card
+            game.send_status ()
 
 class ActivateCreatureHandler(GameCommandHandler):
     def command(self, game):
         cid = int(self.get_argument('cid'))
-        game.on_trait.creatures[cid].activate ()
-        game.send_status ()
-        return False
+        card = game.on_trait.creatures[cid]
+        if not card.target_active_required:
+            return card.activate ()
+        target_string = self.get_argument('target', default="[]")
+        if target_string == "[]":
+            game.get_target = card.target_active_required
+            game.pending_active = card
+            game.send_status ()
 
 application = tornado.web.Application([
     (r"/", MainHandler),
@@ -339,6 +376,7 @@ application = tornado.web.Application([
     (r"/grow_mana", GrowManaHandler),
     (r"/draw", DrawHandler),
     (r"/attack", AttackHandler),
+    (r"/select", SelectHandler),
     (r"/block", BlockHandler),
     (r"/kill", KillHandler),
     (r"/activate_item", ActivateItemHandler),
