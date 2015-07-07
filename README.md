@@ -6,7 +6,7 @@ zero health looses. Full rules available below.
 
 The game is forked in two sub-projects which are both early developpement. One
 branch uses pygame as a display and twisted as a backend, the other, more 
-advanced, uses websockets and web (HTML) display.
+advanced, uses websockets and web (HTML + javascript) display.
 
 For any question, contact arthurhavlicek@gmail.com
 
@@ -46,8 +46,8 @@ attack strength the total of strength of these creatures.
 * Blocker declares which creatures he is willing to block with. Similarly, we
 will call blocker strength the total of strength of blockers.
 * The blocker looses health equivalent to attack strength - blocker strength.
-* The blocker chooses which attackers he wants to kill. It must not exceed his
-block strength.
+* The blocker chooses which attackers he wants to kill. Their total strength
+must not exceed his block strength.
 * He also declares which blockers he wants to sacrifice. As long as the attack
 strength is superior to the strength of one of his creature, he must choose a
 creature to sacrifice and remove its strength from attack strength. Example:
