@@ -68,8 +68,9 @@ class PlayerState ():
 class Game ():
     """Regroup players and their respective connections and variables 
     representing the turn state"""
-    def __init__ (self, connection1, connection2, gameid):
-        self.gameid = gameid
+    def __init__ (self, connection1, connection2, gameid1, gameid2):
+        self.gameid1 = gameid1
+        self.gameid2 = gameid2
         self.player1 = PlayerState (self)
         self.player2 = PlayerState (self)
         self.player1.opponent = self.player2
@@ -80,13 +81,17 @@ class Game ():
         self.end_turn ()
 
     def dump_state (self,player_from):
+        if player_from == self.player1:
+            gameid = self.gameid1
+        else:
+            gameid = self.gameid2
         tempdict = { "self_state": player_from.visible_state(True),
                      "opp_state": player_from.opponent.visible_state(False),
                      "on_trait": self.on_trait==player_from,
                      "attackers": self.attackers or [],
                      "blockers": self.blockers or [],
                      "get_killed": self.get_killed,
-                     "gid": self.gameid,
+                     "gid": gameid,
                      "get_target": self.get_target
                 }
         return json.dumps(tempdict)
@@ -103,7 +108,7 @@ class Game ():
         self.get_target = None
         self.pending_card = None
         self.pending_active = None
-        pub.sendMessage (str(self.gameid)+'.end_turn_event')
+        pub.sendMessage (str(self.gameid1)+'.end_turn_event')
         if self.on_trait == self.player1:
             self.on_trait = self.player2
         else:
@@ -120,7 +125,7 @@ class Game ():
         for i in range(len(self.on_trait.creatures)):
             if attackers[i]:
                 attacker_cards += [self.on_trait.creatures [i]]
-        pub.sendMessage (str(self.gameid)+'.attack_event', attackers=attacker_cards)
+        pub.sendMessage (str(self.gameid1)+'.attack_event', attackers=attacker_cards)
            
         if self.on_block.creatures == []:
             for c in attacker_cards :
@@ -236,9 +241,12 @@ class ClientSocket(websocket.WebSocketHandler):
         if GLOBALS['waiting']:
             inserted = False
             while not inserted:
-                r = random.randint (0,2**30)
-                if r not in GLOBALS['games']:
-                    GLOBALS['games'][r] = Game (GLOBALS['waiting'], self, r)
+                r1 = random.randint (0,2**30)
+                r2 = random.randint (0,2**30)
+                if r1 != r2 and r1 not in GLOBALS['games'] and r2 not in GLOBALS['games']:
+                    game = Game (GLOBALS['waiting'], self, r1, r2)
+                    GLOBALS['games'][r1] = game
+                    GLOBALS['games'][r2] = game
                     inserted = True
             GLOBALS['waiting'] = None
             print "Game launched"

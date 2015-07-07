@@ -140,9 +140,15 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
             if (listname === "hand" || listname === "creatures" || listname === "opp_creatures"){
                 mytab += "<td>" + (parse_json[listname][item].creature_strength || "--") + "</td>";
             }
-            if (can_play && parse_json[listname][item].cost <= parse_json.cur_mana){
-                mytab += "<td><button type=\"button\" onclick=sendHand("+gid+","+item+")>Play</button></td>";
+            if (can_play){
+                if (parse_json[listname][item].cost <= parse_json.cur_mana){
+                    mytab += "<td><button type=\"button\" onclick=sendHand("+gid+","+item+")>Play</button></td>";
+                }
+                else {
+                    mytab += "<td></td>"
+                }
             }
+            
             else if (can_activate_creature ){
                 if (parse_json[listname][item].is_activable)
                 mytab += "<td><button type=\"button\" onclick=activate("+gid+","+item+")>Use effect</button></td>";

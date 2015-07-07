@@ -24,7 +24,7 @@ class PlayCard ():
             cost = self.cost
         if self.owner.cur_mana < cost:
             return False
-        pub.sendMessage(str(self.game_state.gameid)+'.play_event', card=self)
+        pub.sendMessage(str(self.game_state.gameid1)+'.play_event', card=self)
         self.owner.cur_mana -= cost 
         self.owner.hand.remove (self)
         return True
@@ -37,7 +37,8 @@ class PlayCard ():
     def get_card_data (self):
         local_dict = all_card_data[self.num].copy()
         local_dict['creature_strength'] = self.creature_strength
-        local_dict['is_activable'] = self.is_activable ()
+        if self in self.owner.creatures or self in self.owner.items:
+            local_dict['is_activable'] = self.is_activable ()
         return local_dict
 
 class ItemCard (PlayCard):
@@ -133,7 +134,7 @@ class Fasten (SorceryCard):
 class WisdomCrown (ItemCard):
     def play (self):
         if ItemCard.play (self):
-            pub.subscribe (self.on_play, str(self.game_state.gameid)+'.play_event')
+            pub.subscribe (self.on_play, str(self.game_state.gameid1)+'.play_event')
             return True
         return False
     def on_play (self, card):
@@ -143,7 +144,7 @@ class WisdomCrown (ItemCard):
 class ManaWell (ItemCard):
     def play (self):
         if ItemCard.play (self):
-            pub.subscribe (self.on_end_turn, str(self.game_state.gameid)+'.end_turn_event')
+            pub.subscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
             return True
         return False
     def on_end_turn (self):
@@ -151,9 +152,6 @@ class ManaWell (ItemCard):
             self.owner.cur_mana = min (self.owner.cur_mana + 1, self.owner.max_mana)
 
 class DrainingScepter (ItemCard):
-    target_active_required = "opp_items"
-    def get_target_active_list (self):
-        return self.owner.opponent.items
     def activate (self):
         if not self.is_activable():
             return False
@@ -167,7 +165,7 @@ class DrainingScepter (ItemCard):
 class GreenWarden (CreatureCard):
     def play (self):
         if CreatureCard.play (self):
-            pub.subscribe (self.on_play, str(self.game_state.gameid)+'.play_event')
+            pub.subscribe (self.on_play, str(self.game_state.gameid1)+'.play_event')
             return True
         return False
     def on_play (self, card):
@@ -179,7 +177,7 @@ class KingBrandt (CreatureCard):
     def __init__ (self, *args, **kwargs):
         CreatureCard.__init__(self, *args, **kwargs)
         self.boosted_cards = []
-        pub.subscribe (self.on_end_turn, str(self.game_state.gameid)+'.end_turn_event')
+        pub.subscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
     def get_target_active_list (self):
         return self.owner.creatures
     def is_activable (self):
@@ -195,12 +193,25 @@ class KingBrandt (CreatureCard):
         target.creature_strength += 1
         self.owner.cur_mana -= 1
 
+class Abomination (CreatureCard):
+    def play (self):
+        if CreatureCard.play (self):
+            pub.subscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
+            return True
+        return False
+    def on_end_turn (self):
+        if self in self.owner.graveyard:
+            pub.unsubscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
+            for i in range (4):
+                self.owner.creatures.append (CreatureCard (15, self.game_state, self.owner)) 
+
+
 class AngelOfFury (CreatureCard):
     def __init__ (self, *args, **kwargs):
         CreatureCard.__init__(self, *args, **kwargs)
         self.boosted = False
-        pub.subscribe (self.on_attack, str(self.game_state.gameid)+'.attack_event')
-        pub.subscribe (self.on_end_turn, str(self.game_state.gameid)+'.end_turn_event')
+        pub.subscribe (self.on_attack, str(self.game_state.gameid1)+'.attack_event')
+        pub.subscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
     def on_attack (self, attackers):
         if self in attackers :
             self.creature_strength += 2
@@ -208,6 +219,24 @@ class AngelOfFury (CreatureCard):
     def on_end_turn (self):
         if self.boosted :
             self.creature_strength -= 2
+
+class ChromeBerserker (CreatureCard):
+    def play (self):
+        if CreatuerCard.play (self):
+            self.boosted = False
+            return True
+        return False
+    def is_activable (self):
+        return not self.boosted
+    def activate (self):
+        if not self.boosted:
+            self.creature_strength += 3
+            self.boosted = True
+            pub.subscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
+    def on_end_turn (self):
+        pub.unsubscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
+        self.destroy ()
+
 
 class Shadow (CreatureCard):
     def play (self):
@@ -230,11 +259,12 @@ all_play_cards = [
     DrainingScepter, 
     KingBrandt,
     CreatureCard,
-    CreatureCard,
+    Abomination,
     GreenWarden,
     AngelOfFury,
-    CreatureCard,
-    Shadow
+    ChromeBerserker,
+    Shadow,
+    CreatureCard
     ]
     
 def card_data_factory (cost, name, card_type, desc_text, creature_strength=None):
@@ -258,11 +288,13 @@ all_spell_data = [
 all_creature_data = [
     card_data_factory(2, "King Brandt", "creature", "Pay 1 mana: Target creature gains +1 strength until the end of turn. Maximum 3 activations per turn.", 2),
     card_data_factory(3, "Mercenary", "creature", "--", 3),
-    card_data_factory(1, "Blue Warden", "creature", "If an other creature you control is destroyed by a spell or an ability, draw a card.", 1),
+    card_data_factory(4, "Abomination", "creature", "Spawns 4 crawlers when destroyed.", 1),
     card_data_factory(1, "Green Warden", "creature", "Gain 2 life every time a creature is played.", 1),
     card_data_factory(5, "Angel of fury", "creature", "Gains +2 strength when attacking", 4),
-    card_data_factory(2, "Elven archers", "creature", "When fighting grouped with a creature, gains +2 strength.", 1),
-    card_data_factory(2, "Shadow", "creature", "Gains +1 strength for each other shadow you control", 2)
+    card_data_factory(2, "Chrome berserker", "creature", "Activate to gain +3 strength; if you do, destroy it at the end of turn.", 2),
+    card_data_factory(2, "Shadow", "creature", "Gains +1 strength for each other shadow you control", 2),
+    card_data_factory(0, "Crawler", "creature", "--", 1)
 ]
+
 
 all_card_data = all_spell_data + all_creature_data
