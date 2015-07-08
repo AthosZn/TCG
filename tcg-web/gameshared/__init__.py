@@ -288,7 +288,7 @@ all_spell_data = [
 all_creature_data = [
     card_data_factory(2, "King Brandt", "creature", "Pay 1 mana: Target creature gains +1 strength until the end of turn. Maximum 3 activations per turn.", 2),
     card_data_factory(3, "Mercenary", "creature", "--", 3),
-    card_data_factory(4, "Abomination", "creature", "Spawns 4 crawlers when destroyed.", 1),
+    card_data_factory(4, "Abomination", "creature", "Spawns 4 crawlers when destroyed.", 3),
     card_data_factory(1, "Green Warden", "creature", "Gain 2 life every time a creature is played.", 1),
     card_data_factory(5, "Angel of fury", "creature", "Gains +2 strength when attacking", 4),
     card_data_factory(2, "Chrome berserker", "creature", "Activate to gain +3 strength; if you do, destroy it at the end of turn.", 2),

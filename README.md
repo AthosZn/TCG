@@ -14,16 +14,16 @@ For any question, contact arthurhavlicek@gmail.com
 
 ### Pygame version
 
-Pygame version depends on _pygame_ version 1.9 or greater, _twisted_ version 14
-and is a project written for _python 2.7_.
+Pygame version depends on *pygame* version 1.9 or greater, *twisted* version 14
+and is a project written for *python 2.7*.
 To launch a game, run a server.py with python, then connect both clients 
 (cards.py) to it. The IPs are hard coded in the .py scripts, you can modify 
 them if you intend to use this on a non-localhost way.
 
 ### Web version
 
-Pygame version depends on _tornado_ version 4.2 and is a project written for 
-_python 2.7_. It also uses HTML5, javascript and AJAX, and is playable with any
+Pygame version depends on *tornado* version 4.2 and is a project written for 
+*python 2.7*. It also uses HTML5, javascript and AJAX, and is playable with any
 up-to-date web browser. 
 To launch a game, run the server with python, then connect with a web browser
 to its url. This url is hardcoded in the server.py and sse.js, modify them if
