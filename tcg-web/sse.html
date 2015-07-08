@@ -30,16 +30,31 @@
         <br>
         Opponent graveyard:
         <div id="opp_graveyard"></div>
+        <br>
+        Event log:
+        <div id="logger" class="scroll"></div>
     </div>
 </div>
 <style>
-    table {
-        border-collapse: collapse;
-    }
 
-    table, td, th {
-            border: 1px solid black;
-        }
+*{
+    font-family: Tahoma, Geneva, sans-serif
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, td, th {
+    border: 1px solid black;
+}
+div.scroll {
+    width: 400px;
+    height: 150px;
+    border: 1px;
+    font-size: 12px;
+    overflow: auto;
+}
 </style>
 <script src="sse.js">
 </script>

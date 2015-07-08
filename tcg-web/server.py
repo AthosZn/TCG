@@ -77,8 +77,15 @@ class Game ():
         self.player2.opponent = self.player1
         self.connection1 = connection1
         self.connection2 = connection2
-        self.on_trait = self.player2
-        self.end_turn ()
+        self.on_trait = self.player1
+        self.attackers = None
+        self.blockers = None
+        self.on_block = None
+        self.get_killed = None
+        self.get_target = None
+        self.pending_card = None
+        self.pending_active = None
+        self.send_status ()
 
     def dump_state (self,player_from):
         if player_from == self.player1:
@@ -100,6 +107,15 @@ class Game ():
         self.connection1.write_message(self.dump_state(self.player1))
         self.connection2.write_message(self.dump_state(self.player2))
 
+    def log (self, msg_on_trait, msg_other):
+        if self.on_trait == self.player1:
+            self.connection1.write_message(json.dumps({"log": msg_on_trait}))
+            self.connection2.write_message(json.dumps({"log": msg_other}))
+        else:
+            self.connection2.write_message(json.dumps({"log": msg_on_trait}))
+            self.connection1.write_message(json.dumps({"log": msg_other}))
+
+
     def end_turn (self):
         self.attackers = None
         self.blockers = None
@@ -113,6 +129,7 @@ class Game ():
             self.on_trait = self.player2
         else:
             self.on_trait = self.player1
+        self.log ("--- Your turn ---<br>", "--- Opponent's turn ---<br>")
         self.send_status ()
 
     def attack_phase (self, attackers):
@@ -126,7 +143,9 @@ class Game ():
             if attackers[i]:
                 attacker_cards += [self.on_trait.creatures [i]]
         pub.sendMessage (str(self.gameid1)+'.attack_event', attackers=attacker_cards)
-           
+        attacker_names = ', '.join([c.name for c in attacker_cards])
+        self.log ("You attack with "+attacker_names+"</br>", 
+                "You are attacked by "+attacker_names+"</br>")
         if self.on_block.creatures == []:
             for c in attacker_cards :
                 self.on_block.health -= c.creature_strength
@@ -147,12 +166,22 @@ class Game ():
             if self.attackers[i]:
                 attacker_cards += [self.on_trait.creatures [i]]
 
+
         a_strength = 0
         b_strength = 0
         for c in blocker_cards :
             b_strength += c.creature_strength
         for c in attacker_cards :
             a_strength += c.creature_strength
+        if blocker_cards == []:
+            self.on_block.health -= a_strength
+            self.log ("Your attack is unblocked and deals %d damage</br>" % a_strength, 
+                    "Your take %d damage from unblocked attack</br>" % a_strength)
+            self.end_turn ()
+            return
+        blocker_names = ', '.join([c.name for c in blocker_cards])
+        self.log ("You are blocked by "+blocker_names+"</br>", 
+                "You block with "+blocker_names+"</br>")
         if a_strength > b_strength :
             self.get_killed = "attacking"
             self.send_status ()
@@ -219,6 +248,8 @@ class Game ():
                 killed_strength += c.creature_strength
             if killed_strength <= b_strength :
                 self.on_block.health -= a_strength - b_strength
+                self.log ("Your attack deals %d damage</br>" % a_strength - b_strength, 
+                      "Your take %d damage from attack</br>" % a_strength - b_strength)
                 for c in killed_cards :
                     c.destroy ()
                 for c in blocker_cards :
@@ -295,7 +326,10 @@ class PlayHandler(GameCommandHandler):
         handnum = int(self.get_argument('handnum'))
         card = game.on_trait.hand[handnum]
         if not card.target_required:
-            return card.play ()
+            if card.play ():
+                game.log ("You play "+card.name+"<br>","Opponent plays "+card.name+"<br>")
+                return True
+            return False
         target_string = self.get_argument('target', default="[]")
         if target_string == "[]":
             game.get_target = card.target_required
@@ -307,6 +341,7 @@ class GrowManaHandler(GameCommandHandler):
         if game.on_block : 
             return False
         game.on_trait.grow_mana ()
+        game.log ("You grow mana<br>", "Opponent grows mana<br>")
         return True
 
 class DrawHandler(GameCommandHandler):
@@ -314,6 +349,7 @@ class DrawHandler(GameCommandHandler):
         if game.on_block : 
             return False
         game.on_trait.draw ()
+        game.log ("You draw<br>", "Opponent draws<br>")
         return True
 
 class AttackHandler(GameCommandHandler):
@@ -333,10 +369,20 @@ class SelectHandler(GameCommandHandler):
         for i in range (len (target_bools)):
             if target_bools[i] and game.pending_card:
                 game.get_target = None
-                return game.pending_card.play (game.pending_card.get_target_list ()[i])
+                target_card = game.pending_card.get_target_list ()[i]
+                if game.pending_card.play (target_card):
+                    game.log ("You play "+game.pending_card.name+"on "+target_card.name+"<br>",
+                        "Opponent plays "+game.pending_card.name+"on "+target_card.name+"<br>")
+                    return True
+                return False
             elif target_bools[i] and game.pending_active: 
                 game.get_target = None
-                return game.pending_active.activate (game.pending_active.get_target_active_list ()[i])
+                target_card = game.pending_active.get_target_list ()[i]
+                if game.pending_active.activate (target_card):
+                    game.log ("You activate "+game.pending_card.name+"on "+target_card.name+"<br>",
+                        "Opponent activates "+game.pending_card.name+"on "+target_card.name+"<br>")
+                    return True
+                return False
 
 
 class BlockHandler(GameCommandHandler):
@@ -357,7 +403,10 @@ class ActivateItemHandler(GameCommandHandler):
         iid = int(self.get_argument('iid'))
         card = game.on_trait.items[iid]
         if not card.target_active_required:
-            return card.activate ()
+            if card.activate () :
+                game.log ("You activate "+card.name+"<br>", "Opponent activates "+card.name+"<br>")
+                return True
+            return False
         target_string = self.get_argument('target', default="[]")
         if target_string == "[]":
             game.get_target = card.target_active_required
@@ -369,7 +418,10 @@ class ActivateCreatureHandler(GameCommandHandler):
         cid = int(self.get_argument('cid'))
         card = game.on_trait.creatures[cid]
         if not card.target_active_required:
-            return card.activate ()
+            if card.activate () :
+                game.log ("You activate "+card.name+"<br>", "Opponent activates "+card.name+"<br>")
+                return True
+            return False
         target_string = self.get_argument('target', default="[]")
         if target_string == "[]":
             game.get_target = card.target_active_required

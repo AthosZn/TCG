@@ -66,6 +66,11 @@ source.onmessage = function(event) {
                             parse_json.opp_state.opp_max_mana +
                             " hand: " + parse_json.opp_state.opp_hand + " card(s)</b>";
     }
+    if ("log" in parse_json){
+        var logdiv = document.getElementById("logger");
+        logdiv.innerHTML += parse_json.log; 
+        logdiv.scrollTop = 100000
+    }
 //    if ("require_target" in parse_json) {
 //        var htmltab = document.getElementById (parse_json.require_target);
 //        var table = htmltab.firstChild.firstChild;

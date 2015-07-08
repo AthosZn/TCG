@@ -13,6 +13,7 @@ class PlayCard ():
         self.num = num
         self.cost = all_card_data[num]['cost']
         self.creature_strength = all_card_data[num]['creature_strength']
+        self.name = all_card_data[num]['name']
         #self.is_silenced = false 
         self.card_type = all_card_data[num]['card_type']
 
@@ -222,7 +223,7 @@ class AngelOfFury (CreatureCard):
 
 class ChromeBerserker (CreatureCard):
     def play (self):
-        if CreatuerCard.play (self):
+        if CreatureCard.play (self):
             self.boosted = False
             return True
         return False
