@@ -79,7 +79,7 @@ class Blast (SorceryCard):
             return True
         return False
             
-class DoomsDay (SorceryCard):
+class Doomsday (SorceryCard):
     def play (self):
         if SorceryCard.play (self):
             self.game_state.player1.graveyard += self.game_state.player1.creatures
@@ -130,6 +130,9 @@ class Fasten (SorceryCard):
         if target.cost + self.cost <= self.owner.cur_mana:
             if target.play ():
                 SorceryCard.play (self)
+                self.game_state.log ("You play "+self.name+" on "+target.name+"<br>",
+                    "Opponent plays "+self.name+" on "+target.name+"<br>")
+
         return False
 
 class WisdomCrown (ItemCard):
@@ -251,7 +254,7 @@ class Shadow (CreatureCard):
 
 all_play_cards = [
     Blast, 
-    DoomsDay, 
+    Doomsday, 
     Torment,
     Shatter, 
     Fasten,
@@ -277,8 +280,8 @@ def card_data_factory (cost, name, card_type, desc_text, creature_strength=None)
         "creature_strength" : creature_strength }
 
 all_spell_data = [
-    card_data_factory(4, "Blast", "sorcery","Destroy target creature"),
-    card_data_factory(6, "Doom's Day", "sorcery", "Destroy all creatures and items."),
+    card_data_factory(4, "Blast", "sorcery","Destroy target creature."),
+    card_data_factory(6, "Doomsday", "sorcery", "Destroy all creatures and items."),
     card_data_factory(5, "Torment", "sorcery", "Your opponent randomly discards three cards."),
     card_data_factory(2, "Shatter", "sorcery", "Destroy target item"),
     card_data_factory(2, "Fasten", "sorcery", "Play target card for its cost and take an additional turn."),

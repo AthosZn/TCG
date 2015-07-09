@@ -96,15 +96,15 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
         }
         var mytab = "<table>";
         var main_turn = on_trait && attackers.length==0;
-        var can_attack = listname === "creatures" && main_turn
+        var can_select = listname === get_target && on_trait
+        var can_attack = listname === "creatures" && main_turn && !can_select
         var can_block = listname === "creatures" && !on_trait && attackers.length>0 && !get_killed;
-        var can_play = listname === "hand" && main_turn
         var get_opp_kills = listname === "opp_creatures" && !on_trait && get_killed === "attacking";
         var get_self_kills = listname === "creatures" && !on_trait && get_killed === "blocking";
         var show_attackers = listname === "opp_creatures" && !on_trait && attackers.length>0 && !get_killed;
-        var can_activate_item = listname === "items" && main_turn
-        var can_activate_creature = listname === "creatures" && main_turn
-        var can_select = listname === get_target && on_trait
+        var can_activate_item = listname === "items" && main_turn && !can_select
+        var can_activate_creature = listname === "creatures" && main_turn && !can_select
+        var can_play = listname === "hand" && main_turn && !can_select
              
         mytab += "<tr><th>Card</th>";
         if (listname === "hand"){

@@ -139,9 +139,13 @@ class Game ():
         self.log ("You attack with "+attacker_names+"</br>", 
                 "You are attacked by "+attacker_names+"</br>")
         if self.on_block.creatures == []:
+            damage = 0
             for c in attacker_cards :
-                self.on_block.health -= c.creature_strength
+                damage += c.creature_strength
+            self.on_block.health -= damage
             self.on_block = None
+            self.log ("You dealt %d damage</br>" % damage, 
+                    "You suffered %d damage</br>"% damage)
             self.end_turn()
             return
         self.attackers = attackers
@@ -157,7 +161,6 @@ class Game ():
         for i in range(len(self.on_trait.creatures)):
             if self.attackers[i]:
                 attacker_cards += [self.on_trait.creatures [i]]
-
 
         a_strength = 0
         b_strength = 0
@@ -240,8 +243,8 @@ class Game ():
                 killed_strength += c.creature_strength
             if killed_strength <= b_strength :
                 self.on_block.health -= a_strength - b_strength
-                self.log ("Your attack deals %d damage</br>" % a_strength - b_strength, 
-                      "Your take %d damage from attack</br>" % a_strength - b_strength)
+                self.log ("Your attack deals %d damage</br>" % (a_strength - b_strength), 
+                      "Your take %d damage from attack</br>" % (a_strength - b_strength))
                 for c in killed_cards :
                     c.destroy ()
                 for c in blocker_cards :

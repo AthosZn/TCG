@@ -124,16 +124,16 @@ class SelectHandler(GameCommandHandler):
                 game.get_target = None
                 target_card = game.pending_card.get_target_list ()[i]
                 if game.pending_card.play (target_card):
-                    game.log ("You play "+game.pending_card.name+"on "+target_card.name+"<br>",
-                        "Opponent plays "+game.pending_card.name+"on "+target_card.name+"<br>")
+                    game.log ("You play "+game.pending_card.name+" on "+target_card.name+"<br>",
+                        "Opponent plays "+game.pending_card.name+" on "+target_card.name+"<br>")
                     return True
                 return False
             elif target_bools[i] and game.pending_active: 
                 game.get_target = None
-                target_card = game.pending_active.get_target_list ()[i]
+                target_card = game.pending_active.get_target_active_list ()[i]
                 if game.pending_active.activate (target_card):
-                    game.log ("You activate "+game.pending_card.name+"on "+target_card.name+"<br>",
-                        "Opponent activates "+game.pending_card.name+"on "+target_card.name+"<br>")
+                    game.log ("You activate "+game.pending_card.name+" on "+target_card.name+"<br>",
+                        "Opponent activates "+game.pending_card.name+" on "+target_card.name+"<br>")
                     return True
                 return False
 
