@@ -1,7 +1,7 @@
 from gameshared import *
 import random
 import json
-from pubsub import *
+from pubsub import pub
 
 class PlayerState ():
     """Represent gameplay variables of a player: stats, deck and cards"""

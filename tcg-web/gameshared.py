@@ -1,5 +1,5 @@
 import random
-from pubsub import *
+from pubsub import pub
 
 def play_card_factory (num, game_state, owner):
     return all_play_cards[num](num, game_state, owner)
