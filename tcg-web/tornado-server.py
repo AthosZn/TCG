@@ -10,9 +10,19 @@ GLOBALS={
     'games' : {},
 }
 
-class MainHandler(tornado.web.RequestHandler):
+class GamePageHandler(tornado.web.RequestHandler):
     def get(self):
         page = open ("sse.html")
+        self.write(page.read())
+
+class IndexPageHandler(tornado.web.RequestHandler):
+    def get(self):
+        page = open ("index.html")
+        self.write(page.read())
+
+class RulesPageHandler(tornado.web.RequestHandler):
+    def get(self):
+        page = open ("rules.html")
         self.write(page.read())
 
 class JsHandler(tornado.web.RequestHandler):
@@ -182,7 +192,10 @@ class ActivateCreatureHandler(GameCommandHandler):
             game.send_status ()
 
 application = tornado.web.Application([
-    (r"/", MainHandler),
+    (r"/", IndexPageHandler),
+    (r"/index.html", IndexPageHandler),
+    (r"/game", GamePageHandler),
+    (r"/rules", RulesPageHandler),
     (r"/sse.js", JsHandler),
     (r"/socket", ClientSocket),
     (r"/play", PlayHandler),

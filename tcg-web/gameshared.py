@@ -1,5 +1,5 @@
 import random
-from pubsub import pub
+from pubsub import *
 
 def play_card_factory (num, game_state, owner):
     return all_play_cards[num](num, game_state, owner)
@@ -24,6 +24,7 @@ class PlayCard ():
         else:
             cost = self.cost
         if self.owner.cur_mana < cost:
+            print "No mana: %d for %d" % (self.owner.cur_mana, cost)
             return False
         pub.sendMessage(str(self.game_state.gameid1)+'.play_event', card=self)
         self.owner.cur_mana -= cost 

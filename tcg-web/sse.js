@@ -40,51 +40,59 @@ function sendCheckBoxes (url, gid, length){
     ajaxSend (url,"gameid="+gid+"&checkboxes="+JSON.stringify(boolArray))
 }
 
-var source = new WebSocket("ws://localhost:8888/socket");
-source.onmessage = function(event) {
-    var parse_json = JSON.parse (event.data);
-    if ("self_state" in parse_json){
-        disp_pcards (parse_json.self_state, 
-            ["hand","creatures","items","graveyard"], 
-            parse_json.on_trait, parse_json.attackers, parse_json.blockers, parse_json.get_killed, parse_json.gid, parse_json.get_target);
-        var pstatus = document.getElementById("pstatus");
-        pstatus.innerHTML = "<b>HP: " + parse_json.self_state.health +
-                            " MP: " + parse_json.self_state.cur_mana + "/" +
-                            parse_json.self_state.max_mana + "</b>" ;
-        if (parse_json.on_trait && !(parse_json.attackers.length>0)) {
-            pstatus.innerHTML += " <button type=\"button\" onclick=draw("+parse_json.gid+")>Draw</button><button type=\"button\" onclick=growMana("+
-                parse_json.gid+")>Grow mana</button>";
+if ("WebSocket" in window){
+    var source = new WebSocket("ws://localhost:8888/socket");
+    source.onmessage = function(event) {
+        var parse_json = JSON.parse (event.data);
+        if ("self_state" in parse_json){
+            disp_pcards (parse_json.self_state, 
+                ["hand","creatures","items","graveyard"], 
+                parse_json.on_trait, parse_json.attackers, parse_json.blockers, 
+                parse_json.get_killed, parse_json.gid, parse_json.get_target);
+            var pstatus = document.getElementById("pstatus");
+            pstatus.innerHTML = "<b>HP: " + parse_json.self_state.health +
+                                " MP: " + parse_json.self_state.cur_mana + "/" +
+                                parse_json.self_state.max_mana + "</b>" ;
+            if (parse_json.on_trait && !(parse_json.attackers.length>0)) {
+                pstatus.innerHTML += " <button type=\"button\" onclick=draw("+
+                    parse_json.gid+")>Draw</button><button type=\"button\" onclick=growMana("+
+                    parse_json.gid+")>Grow mana</button>";
+            }
         }
-    }
-    if ("opp_state" in parse_json){
-        disp_pcards (parse_json.opp_state, 
-            ["opp_creatures","opp_items","opp_graveyard"], 
-            parse_json.on_trait, parse_json.attackers, parse_json.blockers, parse_json.get_killed, parse_json.gid, parse_json.get_target);
-        var oppstatus = document.getElementById("oppstatus");
-        opp_status.innerHTML = "<b>Opponent HP: " + parse_json.opp_state.opp_health +
-                            " MP: " + parse_json.opp_state.opp_cur_mana + "/" +
-                            parse_json.opp_state.opp_max_mana +
-                            " hand: " + parse_json.opp_state.opp_hand + " card(s)</b>";
-    }
-    if ("log" in parse_json){
-        var logdiv = document.getElementById("logger");
-        logdiv.innerHTML += parse_json.log; 
-        logdiv.scrollTop = 100000
-    }
-//    if ("require_target" in parse_json) {
-//        var htmltab = document.getElementById (parse_json.require_target);
-//        var table = htmltab.firstChild.firstChild;
-//        if (table != null) {
-//            var header = table.firstChild;
-//            var targetElement = document.createElement ("th")
-//            var targetText = document.createTextNode ("Target")
-//            targetElement.appendChild (targetText)
-//            header.appendChild (targetElement)
-//            for (i=1; i<table.childNodes.length; i++){
-//            }
-//        }
-//    }
-};
+        if ("opp_state" in parse_json){
+            disp_pcards (parse_json.opp_state, 
+                ["opp_creatures","opp_items","opp_graveyard"], 
+                parse_json.on_trait, parse_json.attackers, parse_json.blockers, 
+                parse_json.get_killed, parse_json.gid, parse_json.get_target);
+            var oppstatus = document.getElementById("oppstatus");
+            opp_status.innerHTML = "<b>Opponent HP: " + parse_json.opp_state.opp_health +
+                                " MP: " + parse_json.opp_state.opp_cur_mana + "/" +
+                                parse_json.opp_state.opp_max_mana +
+                                " hand: " + parse_json.opp_state.opp_hand + " card(s)</b>";
+        }
+        if ("log" in parse_json){
+            var logdiv = document.getElementById("logger");
+            logdiv.innerHTML += parse_json.log; 
+            logdiv.scrollTop = 100000
+        }
+    //    if ("require_target" in parse_json) {
+    //        var htmltab = document.getElementById (parse_json.require_target);
+    //        var table = htmltab.firstChild.firstChild;
+    //        if (table != null) {
+    //            var header = table.firstChild;
+    //            var targetElement = document.createElement ("th")
+    //            var targetText = document.createTextNode ("Target")
+    //            targetElement.appendChild (targetText)
+    //            header.appendChild (targetElement)
+    //            for (i=1; i<table.childNodes.length; i++){
+    //            }
+    //        }
+    //    }
+    };
+}
+else {
+    alert ("WebSocket not supported! You can't play the game until a workararound is implemented. Mail the project owner!")
+}
 
 function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get_killed, gid, get_target) {
     for (cardindex in targetlist){
