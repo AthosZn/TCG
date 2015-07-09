@@ -1,3 +1,9 @@
+function toggleShow(id) {
+    if (document.getElementById(id).style.display === 'block')
+        document.getElementById(id).style.display = 'none';
+    else
+        document.getElementById(id).style.display = 'block';
+}
 function ajaxSend (url, args) {
     var xmlhttp = new XMLHttpRequest(); 
     xmlhttp.open("POST",url,true);
@@ -42,6 +48,7 @@ function sendCheckBoxes (url, gid, length){
 
 if ("WebSocket" in window){
     var source = new WebSocket("ws://localhost:8888/socket");
+    //var source = new WebSocket("ws://195.154.45.210:8888/socket");
     source.onmessage = function(event) {
         var parse_json = JSON.parse (event.data);
         if ("self_state" in parse_json){
@@ -116,7 +123,6 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
              
         mytab += "<tr><th>Card</th>";
         if (listname === "hand"){
-            mytab += "<th>Card type</th>";
             mytab += "<th>Cost</th>";
         }
         if (listname === "hand" || listname === "creatures" || listname === "opp_creatures"){
@@ -145,9 +151,17 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
         }
         mytab += "</tr>";
         for (item in parse_json[listname]){
-            mytab += "<td title=\""+ parse_json[listname][item].desc_text +"\">" + parse_json[listname][item].name + "</td>";
+            var colorcode = "#ffffff"
+            var ctype = parse_json[listname][item].card_type
+            if (ctype === "creature")
+                colorcode = "#88ff88";
+            else if (ctype === "item")
+                colorcode = "#ffff88";
+            else if (ctype === "sorcery")
+                colorcode = "#8888ff";
+            mytab += "<tr title=\""+ ctype + ": " + parse_json[listname][item].desc_text +"\" style=\"background:"+
+                colorcode+"\"><td>" + parse_json[listname][item].name + "</td>";
             if (listname === "hand"){
-                mytab += "<td>" + parse_json[listname][item].card_type + "</td>";
                 mytab += "<td>" + parse_json[listname][item].cost + "</td>";
             }
             if (listname === "hand" || listname === "creatures" || listname === "opp_creatures"){

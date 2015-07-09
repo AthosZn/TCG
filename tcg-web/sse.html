@@ -14,8 +14,8 @@
         Items:
         <div id="items"></div>
         <br>
-        Graveyard:
-        <div id="graveyard"></div>
+        <button type="button" onclick="toggleShow('graveyard')">Hide/show graveyard</button>
+        <div id="graveyard" style="display:none"></div>
         <br>
         <hr>
         <div id="opp_status"></div>
@@ -25,13 +25,17 @@
         Opponent items:
         <div id="opp_items"></div>
         <br>
-        Opponent graveyard:
-        <div id="opp_graveyard"></div>
+        <button type="button" onclick="toggleShow('opp_graveyard')">Hide/show graveyard</button>
+        <div id="opp_graveyard" style="display:none"></div>
         <br>
 </div>
 <div id="logger" class="scroll"></div>
 </div>
 <style>
+
+body{
+    background: #ffdfbd;
+}
 
 *{
     font-family: Tahoma, Geneva, sans-serif;
@@ -54,8 +58,8 @@ div.scroll {
     margin-left: auto;
     margin-right: auto;
     border: 1px;
-    font-size: 13px;
-    font-size: 2vh;
+    font-size: 12px;
+    font-size: 1.8vh;
     background: #dddddd;
     overflow: auto;
     border: 1px solid black;

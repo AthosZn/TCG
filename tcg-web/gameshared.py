@@ -224,6 +224,7 @@ class AngelOfFury (CreatureCard):
     def on_end_turn (self):
         if self.boosted :
             self.creature_strength -= 2
+            self.boosted = False
 
 class ChromeBerserker (CreatureCard):
     def play (self):
