@@ -174,6 +174,9 @@ class GreenWarden (CreatureCard):
             return True
         return False
     def on_play (self, card):
+        if self not in self.owner.creatures:
+            pub.unsubscribe (self.on_play, str(self.game_state.gameid1)+'.play_event')
+            return 
         if self.game_state.on_trait == self.owner and card.card_type == 'creature':
             self.owner.health += 2
 
