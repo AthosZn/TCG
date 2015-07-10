@@ -43,7 +43,7 @@ class PlayerState ():
         else :
             vis_state = {
             'opp_creatures' : [ c.get_card_data() for c in self.creatures ],
-            'opp_creatures' : [ c.get_card_data() for c in self.items ],
+            'opp_items' : [ c.get_card_data() for c in self.items ],
             'opp_hand' : len ( self.hand ), 
             'opp_graveyard' : [ c.get_card_data() for c in self.graveyard ],
             'opp_health' : self.health,
@@ -134,14 +134,7 @@ class Game ():
         self.log ("You attack with "+attacker_names+"</br>", 
                 "You are attacked by "+attacker_names+"</br>")
         if self.on_block.creatures == []:
-            damage = 0
-            for c in attacker_cards :
-                damage += c.creature_strength
-            self.on_block.health -= damage
-            self.on_block = None
-            self.log ("You dealt %d damage</br>" % damage, 
-                    "You suffered %d damage</br>"% damage)
-            self.end_turn()
+            self.block_phase (self, [])
             return
         self.attackers = attackers
         self.send_status ()
@@ -163,10 +156,13 @@ class Game ():
             b_strength += c.creature_strength
         for c in attacker_cards :
             a_strength += c.creature_strength
+        if a_strength > b_strength:
+            damage = a_strength - b_strength
+            self.on_block.health -= damage
+            pub.sendMessage (str(self.gameid1)+'.combat_damage_event', damage)
+            self.log ("You dealt %d damage</br>" % damage, 
+                    "You suffered %d damage</br>"% damage)
         if blocker_cards == []:
-            self.on_block.health -= a_strength
-            self.log ("Your attack is unblocked and deals %d damage</br>" % a_strength, 
-                    "Your take %d damage from unblocked attack</br>" % a_strength)
             self.end_turn ()
             return
         blocker_names = ', '.join([c.name for c in blocker_cards])
@@ -237,9 +233,6 @@ class Game ():
             for c in killed_cards :
                 killed_strength += c.creature_strength
             if killed_strength <= b_strength :
-                self.on_block.health -= a_strength - b_strength
-                self.log ("Your attack deals %d damage</br>" % (a_strength - b_strength), 
-                      "Your take %d damage from attack</br>" % (a_strength - b_strength))
                 for c in killed_cards :
                     c.destroy ()
                 for c in blocker_cards :

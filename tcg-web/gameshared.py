@@ -133,7 +133,6 @@ class Fasten (SorceryCard):
                 SorceryCard.play (self)
                 self.game_state.log ("You play "+self.name+" on "+target.name+"<br>",
                     "Opponent plays "+self.name+" on "+target.name+"<br>")
-
         return False
 
 class WisdomCrown (ItemCard):
@@ -143,7 +142,7 @@ class WisdomCrown (ItemCard):
             return True
         return False
     def on_play (self, card):
-        if self.game_state.on_trait == self.owner and card.card_type == 'sorcery':
+        if card.card_type == 'sorcery':
             self.owner.draw ()
             
 class ManaWell (ItemCard):
@@ -160,12 +159,24 @@ class DrainingScepter (ItemCard):
     def activate (self):
         if not self.is_activable():
             return False
-        self.owner.cur_mana -= 2
-        self.owner.health += 1
-        self.owner.opponent.health -= 1
+        self.owner.cur_mana -= 3 
+        self.owner.health += 2
+        self.owner.opponent.health -= 2
         return False
     def is_activable (self):
-        return self.owner.cur_mana > 1 
+        return self.owner.cur_mana > 2 
+
+class PlateMail (ItemCard):
+    def play (self):
+        if ItemCard.play(self):
+            pub.subscribe (self.on_combat_damage, str(self.game_state.gameid1)+'.combat_damage_event')
+            return True
+        return False
+    def on_combat_damage (self, damage):
+        if not self in self.owner.items:
+            pub.unsubscribe (self.on_combat_damage, str(self.game_state.gameid1)+'.combat_damage_event')
+            return
+        self.owner.health += min (damage, 2)
 
 class GreenWarden (CreatureCard):
     def play (self):
@@ -266,6 +277,7 @@ all_play_cards = [
     WisdomCrown,
     ManaWell, 
     DrainingScepter, 
+    PlateMail,
     KingBrandt,
     CreatureCard,
     Abomination,
@@ -290,9 +302,10 @@ all_spell_data = [
     card_data_factory(5, "Torment", "sorcery", "Your opponent randomly discards three cards."),
     card_data_factory(2, "Shatter", "sorcery", "Destroy target item"),
     card_data_factory(2, "Fasten", "sorcery", "Play target card for its cost and take an additional turn."),
-    card_data_factory(3, "Wisdom crown", "item", "Each time you play a sorcery, draw a card."),
-    card_data_factory(3, "Mana well", "item", "Gain 1 mana at the end of your turn."),
-    card_data_factory(2, "Draining scepter", "item", "Pay 2 mana: Your opponent looses 1 life and you gain 1 life.") ]
+    card_data_factory(3, "Wisdom crown", "item", "Each time a sorcery is played, draw a card."),
+    card_data_factory(2, "Mana well", "item", "Gain 1 mana at the end of your turn."),
+    card_data_factory(5, "Draining scepter", "item", "Pay 2 mana: Your opponent looses 2 HP and you gain 2 HP."),
+    card_data_factory(3, "Plate mail", "item", "You recieve 2 less damage from each attack.") ]
 
 all_creature_data = [
     card_data_factory(2, "King Brandt", "creature", "Pay 1 mana: Target creature gains +1 strength until the end of turn. Maximum 3 activations per turn.", 2),
