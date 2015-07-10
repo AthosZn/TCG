@@ -9,7 +9,8 @@ class PlayerState ():
         self.health = 20
         self.cur_mana = 2
         self.max_mana = 2
-        self.in_play = []
+        self.creatures = []
+        self.items = []
         self.graveyard = []
         self.hand = [play_card_factory (random.randint (0, len (all_card_data)-1), 
             game_state, self) for i in range (5)]
@@ -31,7 +32,8 @@ class PlayerState ():
     def visible_state (self, from_self):
         if from_self :
             vis_state = {
-            'in_play' : [ c.get_card_data() for c in self.in_play ],
+            'creatures' : [ c.get_card_data() for c in self.creatures ],
+            'items' : [ c.get_card_data() for c in self.items ],
             'hand' : [ c.get_card_data() for c in self.hand ], 
             'graveyard' : [ c.get_card_data() for c in self.graveyard ],
             'health' : self.health,
@@ -40,7 +42,8 @@ class PlayerState ():
             }
         else :
             vis_state = {
-            'opp_in_play' : [ c.get_card_data() for c in self.creatures ],
+            'opp_creatures' : [ c.get_card_data() for c in self.creatures ],
+            'opp_creatures' : [ c.get_card_data() for c in self.items ],
             'opp_hand' : len ( self.hand ), 
             'opp_graveyard' : [ c.get_card_data() for c in self.graveyard ],
             'opp_health' : self.health,
