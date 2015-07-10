@@ -20,6 +20,11 @@ class IndexPageHandler(tornado.web.RequestHandler):
         page = open ("index.html")
         self.write(page.read())
 
+class SkyretPageHandler(tornado.web.RequestHandler):
+    def get(self):
+        page = open ("skaret.jpg")
+        self.write(page.read())
+
 class RulesPageHandler(tornado.web.RequestHandler):
     def get(self):
         page = open ("rules.html")
@@ -194,6 +199,7 @@ class ActivateCreatureHandler(GameCommandHandler):
 application = tornado.web.Application([
     (r"/", IndexPageHandler),
     (r"/index.html", IndexPageHandler),
+    (r"/skaret.jpg", SkyretPageHandler),
     (r"/game", GamePageHandler),
     (r"/rules", RulesPageHandler),
     (r"/sse.js", JsHandler),

@@ -134,9 +134,9 @@ class Game ():
         self.log ("You attack with "+attacker_names+"</br>", 
                 "You are attacked by "+attacker_names+"</br>")
         if self.on_block.creatures == []:
-            self.block_phase (self, [])
+            self.attackers = attackers
+            self.block_phase ([])
             return
-        self.attackers = attackers
         self.send_status ()
 
     def block_phase (self, blockers):

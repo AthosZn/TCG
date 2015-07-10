@@ -159,8 +159,8 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
                 colorcode = "#ffffa0";
             else if (ctype === "sorcery")
                 colorcode = "#a0a0ff";
-            mytab += "<tr title=\""+ ctype + ": " + parse_json[listname][item].desc_text +"\" style=\"background:"+
-                colorcode+"\"><td>" + parse_json[listname][item].name + "</td>";
+            mytab += "<tr title=\""+ ctype + ": " + parse_json[listname][item].desc_text +"\"/tr><td style=\"background:"+
+                colorcode+"\">" + parse_json[listname][item].name + "</td>";
             if (listname === "hand"){
                 mytab += "<td>" + parse_json[listname][item].cost + "</td>";
             }
