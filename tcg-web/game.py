@@ -133,8 +133,8 @@ class Game ():
         attacker_names = ', '.join([c.name for c in attacker_cards])
         self.log ("You attack with "+attacker_names+"</br>", 
                 "You are attacked by "+attacker_names+"</br>")
+        self.attackers = attackers
         if self.on_block.creatures == []:
-            self.attackers = attackers
             self.block_phase ([])
             return
         self.send_status ()
