@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="game.js"></script>
+</head>
+<body>
+    <div style="text-align:center">
+        <div id="opp_status"></div>
+        Opponent creatures:
+        <div id="opp_creatures"></div>
+        <br>
+        Opponent items:
+        <div id="opp_items"></div>
+        <br>
+        <button type="button" onclick="toggleShow('opp_graveyard')">Hide/show graveyard</button>
+        <div id="opp_graveyard" style="display:none"></div>
+        <hr>
+        <div id="pstatus"></div>
+        Hand:
+        <div id="hand"></div>
+        <br>
+        Creatures:
+        <div id="creatures"></div>
+        <br>
+        Items:
+        <div id="items"></div>
+        <br>
+        <button type="button" onclick="toggleShow('graveyard')">Hide/show graveyard</button>
+        <div id="graveyard" style="display:none"></div>
+        <br>
+    </div>
+    <div id="logger" class="logger"></div>
+<style>
+
+body{
+    background: #ccccff;
+}
+
+
+*{
+    font-family: Tahoma, Geneva, sans-serif;
+    font-size: 17px;
+    font-size: 3vmin;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, td, th {
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid black;
+}
+
+div.logger {
+    margin-left: auto;
+    margin-right: auto;
+    border: 2px solid #444444;
+    font-size: 12px;
+    font-size: 2.2vmin;
+    width: 45vmin;
+    height: 20vmin;
+    background: #dddddd;
+    overflow: auto;
+    text-align: center;
+}
+</style>
+
+</html>
+
