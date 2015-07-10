@@ -9,8 +9,7 @@ class PlayerState ():
         self.health = 20
         self.cur_mana = 2
         self.max_mana = 2
-        self.creatures = []
-        self.items = []
+        self.in_play = []
         self.graveyard = []
         self.hand = [play_card_factory (random.randint (0, len (all_card_data)-1), 
             game_state, self) for i in range (5)]
@@ -25,11 +24,6 @@ class PlayerState ():
         self.graveyard.append (card)
         self.hand.remove (card)
 
-    def kill (self, creature_index):
-        card = self.creatures[creature_index]
-        self.graveyard.append (card)
-        self.creatures.remove (card)
-
     def grow_mana (self):
         self.max_mana = min (self.max_mana + 1, 10)
         self.cur_mana = self.max_mana
@@ -37,20 +31,18 @@ class PlayerState ():
     def visible_state (self, from_self):
         if from_self :
             vis_state = {
-            'creatures' : [ c.get_card_data() for c in self.creatures ],
+            'in_play' : [ c.get_card_data() for c in self.in_play ],
             'hand' : [ c.get_card_data() for c in self.hand ], 
             'graveyard' : [ c.get_card_data() for c in self.graveyard ],
-            'items' : [ c.get_card_data() for c in self.items ],
             'health' : self.health,
             'cur_mana' : self.cur_mana,
             'max_mana' : self.max_mana
             }
         else :
             vis_state = {
-            'opp_creatures' : [ c.get_card_data() for c in self.creatures ],
+            'opp_in_play' : [ c.get_card_data() for c in self.creatures ],
             'opp_hand' : len ( self.hand ), 
             'opp_graveyard' : [ c.get_card_data() for c in self.graveyard ],
-            'opp_items' : [ c.get_card_data() for c in self.items ],
             'opp_health' : self.health,
             'opp_cur_mana' : self.cur_mana,
             'opp_max_mana' : self.max_mana

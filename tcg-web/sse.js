@@ -47,7 +47,7 @@ function sendCheckBoxes (url, gid, length){
 }
 
 if ("WebSocket" in window){
-    var source = new WebSocket("ws://localhost:8888/socket");
+    var source = new WebSocket("ws://192.168.0.24:8888/socket");
     //var source = new WebSocket("ws://195.154.45.210:8888/socket");
     source.onmessage = function(event) {
         var parse_json = JSON.parse (event.data);
@@ -57,9 +57,9 @@ if ("WebSocket" in window){
                 parse_json.on_trait, parse_json.attackers, parse_json.blockers, 
                 parse_json.get_killed, parse_json.gid, parse_json.get_target);
             var pstatus = document.getElementById("pstatus");
-            pstatus.innerHTML = "<b>HP: " + parse_json.self_state.health +
+            pstatus.innerHTML = "HP: " + parse_json.self_state.health +
                                 " MP: " + parse_json.self_state.cur_mana + "/" +
-                                parse_json.self_state.max_mana + "</b>" ;
+                                parse_json.self_state.max_mana ;
             if (parse_json.on_trait && !(parse_json.attackers.length>0)) {
                 pstatus.innerHTML += " <button type=\"button\" onclick=draw("+
                     parse_json.gid+")>Draw</button><button type=\"button\" onclick=growMana("+
@@ -72,10 +72,10 @@ if ("WebSocket" in window){
                 parse_json.on_trait, parse_json.attackers, parse_json.blockers, 
                 parse_json.get_killed, parse_json.gid, parse_json.get_target);
             var oppstatus = document.getElementById("oppstatus");
-            opp_status.innerHTML = "<b>Opponent HP: " + parse_json.opp_state.opp_health +
+            opp_status.innerHTML = "Opponent HP: " + parse_json.opp_state.opp_health +
                                 " MP: " + parse_json.opp_state.opp_cur_mana + "/" +
                                 parse_json.opp_state.opp_max_mana +
-                                " hand: " + parse_json.opp_state.opp_hand + " card(s)</b>";
+                                " hand: " + parse_json.opp_state.opp_hand + " card(s)";
         }
         if ("log" in parse_json){
             var logdiv = document.getElementById("logger");
@@ -106,7 +106,7 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
         var varhand = document.getElementById(targetlist[cardindex]);
         var listname = targetlist[cardindex];
         if (parse_json[listname].length === 0){
-            varhand.innerHTML = "Empty"
+            varhand.innerHTML = ""
             continue;
         }
         var mytab = "<table>";
@@ -154,11 +154,11 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
             var colorcode = "#ffffff"
             var ctype = parse_json[listname][item].card_type
             if (ctype === "creature")
-                colorcode = "#88ff88";
+                colorcode = "#a0ffa0";
             else if (ctype === "item")
-                colorcode = "#ffff88";
+                colorcode = "#ffffa0";
             else if (ctype === "sorcery")
-                colorcode = "#8888ff";
+                colorcode = "#a0a0ff";
             mytab += "<tr title=\""+ ctype + ": " + parse_json[listname][item].desc_text +"\" style=\"background:"+
                 colorcode+"\"><td>" + parse_json[listname][item].name + "</td>";
             if (listname === "hand"){
