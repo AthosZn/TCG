@@ -10,29 +10,12 @@ GLOBALS={
     'games' : {},
 }
 
-class GamePageHandler(tornado.web.RequestHandler):
-    def get(self):
-        page = open ("sse.html")
-        self.write(page.read())
-
-class IndexPageHandler(tornado.web.RequestHandler):
-    def get(self):
-        page = open ("index.html")
-        self.write(page.read())
-
-class SkyretPageHandler(tornado.web.RequestHandler):
-    def get(self):
-        page = open ("skaret.jpg")
-        self.write(page.read())
-
-class RulesPageHandler(tornado.web.RequestHandler):
-    def get(self):
-        page = open ("rules.html")
-        self.write(page.read())
-
-class JsHandler(tornado.web.RequestHandler):
-    def get(self):
-        page = open ("sse.js")
+class StaticContentHandler(tornado.web.RequestHandler):
+    def get(self, *args, **kwargs):
+        if (len(args[0]) < 1):
+            page = open ("static/index.html")
+        else:
+            page = open ("static/" + args[0])
         self.write(page.read())
 
 class ClientSocket(websocket.WebSocketHandler):
@@ -197,12 +180,6 @@ class ActivateCreatureHandler(GameCommandHandler):
             game.send_status ()
 
 application = tornado.web.Application([
-    (r"/", IndexPageHandler),
-    (r"/index.html", IndexPageHandler),
-    (r"/skaret.jpg", SkyretPageHandler),
-    (r"/game", GamePageHandler),
-    (r"/rules", RulesPageHandler),
-    (r"/sse.js", JsHandler),
     (r"/socket", ClientSocket),
     (r"/play", PlayHandler),
     (r"/grow_mana", GrowManaHandler),
@@ -212,7 +189,8 @@ application = tornado.web.Application([
     (r"/block", BlockHandler),
     (r"/kill", KillHandler),
     (r"/activate_item", ActivateItemHandler),
-    (r"/activate_creature", ActivateCreatureHandler)
+    (r"/activate_creature", ActivateCreatureHandler),
+    (r"/(.*)", StaticContentHandler)
 ], debug=True)
 
 if __name__ == "__main__":

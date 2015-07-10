@@ -83,14 +83,9 @@ class Blast (SorceryCard):
 class Doomsday (SorceryCard):
     def play (self):
         if SorceryCard.play (self):
-            self.game_state.player1.graveyard += self.game_state.player1.creatures
-            self.game_state.player1.graveyard += self.game_state.player1.items
-            self.game_state.player1.creatures = []
-            self.game_state.player1.items = []
-            self.game_state.player2.graveyard += self.game_state.player2.creatures
-            self.game_state.player2.graveyard += self.game_state.player2.items
-            self.game_state.player2.creatures = []
-            self.game_state.player2.items = []
+            for card in self.owner.items + self.owner.creatures + \
+                    self.owner.opponent.items + self.owner.opponent.creatures:
+                card.destroy ()
             return True
         return False
 
@@ -142,6 +137,9 @@ class WisdomCrown (ItemCard):
             return True
         return False
     def on_play (self, card):
+        if not self in self.owner.items:
+            pub.unsubscribe (self.on_play, str(self.game_state.gameid1)+'.play_event')
+            return
         if card.card_type == 'sorcery':
             self.owner.draw ()
             
@@ -152,6 +150,9 @@ class ManaWell (ItemCard):
             return True
         return False
     def on_end_turn (self):
+        if not self in self.owner.items:
+            pub.unsubscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
+            return
         if self.owner == self.game_state.on_trait:
             self.owner.cur_mana = min (self.owner.cur_mana + 1, self.owner.max_mana)
 
@@ -169,14 +170,12 @@ class DrainingScepter (ItemCard):
 class PlateMail (ItemCard):
     def play (self):
         if ItemCard.play(self):
-            pub.subscribe (self.on_combat_damage, str(self.game_state.gameid1)+'.combat_damage_event')
+            self.owner.armor += 2
             return True
         return False
-    def on_combat_damage (self, damage):
-        if not self in self.owner.items:
-            pub.unsubscribe (self.on_combat_damage, str(self.game_state.gameid1)+'.combat_damage_event')
-            return
-        self.owner.health += min (damage, 2)
+    def destroy (self):
+        self.owner.armor -= 2
+        return ItemCard.destroy (self)
 
 class GreenWarden (CreatureCard):
     def play (self):
@@ -188,7 +187,7 @@ class GreenWarden (CreatureCard):
         if self not in self.owner.creatures:
             pub.unsubscribe (self.on_play, str(self.game_state.gameid1)+'.play_event')
             return 
-        if self.game_state.on_trait == self.owner and card.card_type == 'creature':
+        if card.card_type == 'creature':
             self.owner.health += 2
 
 class KingBrandt (CreatureCard):
@@ -213,17 +212,10 @@ class KingBrandt (CreatureCard):
         self.owner.cur_mana -= 1
 
 class Abomination (CreatureCard):
-    def play (self):
-        if CreatureCard.play (self):
-            pub.subscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
-            return True
-        return False
-    def on_end_turn (self):
-        if self in self.owner.graveyard:
-            pub.unsubscribe (self.on_end_turn, str(self.game_state.gameid1)+'.end_turn_event')
-            for i in range (4):
-                self.owner.creatures.append (CreatureCard (15, self.game_state, self.owner)) 
-
+    def destroy (self):
+        for i in range (4):
+            self.owner.creatures.append (CreatureCard (len(all_play_cards)-1, self.game_state, self.owner)) 
+        CreatureCard.destroy (self)
 
 class AngelOfFury (CreatureCard):
     def __init__ (self, *args, **kwargs):

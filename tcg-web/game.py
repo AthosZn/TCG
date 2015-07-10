@@ -9,6 +9,7 @@ class PlayerState ():
         self.health = 20
         self.cur_mana = 2
         self.max_mana = 2
+        self.armor = 0
         self.creatures = []
         self.items = []
         self.graveyard = []
@@ -19,11 +20,6 @@ class PlayerState ():
 
     def draw (self):
         self.hand.append (self.deck.pop ())
-
-    def discard (self, hand_index):
-        card = self.hand[hand_index]
-        self.graveyard.append (card)
-        self.hand.remove (card)
 
     def grow_mana (self):
         self.max_mana = min (self.max_mana + 1, 10)
@@ -134,7 +130,7 @@ class Game ():
         self.log ("You attack with "+attacker_names+"</br>", 
                 "You are attacked by "+attacker_names+"</br>")
         self.attackers = attackers
-        if self.on_block.creatures == []:
+        if not self.on_block.creatures:
             self.block_phase ([])
             return
         self.send_status ()
@@ -157,12 +153,12 @@ class Game ():
         for c in attacker_cards :
             a_strength += c.creature_strength
         if a_strength > b_strength:
-            damage = a_strength - b_strength
+            damage = a_strength - b_strength - self.on_block.armor
+            damage = max (damage, 0)
             self.on_block.health -= damage
-            pub.sendMessage (str(self.gameid1)+'.combat_damage_event', damage)
             self.log ("You dealt %d damage</br>" % damage, 
                     "You suffered %d damage</br>"% damage)
-        if blocker_cards == []:
+        if not blocker_cards:
             self.end_turn ()
             return
         blocker_names = ', '.join([c.name for c in blocker_cards])
