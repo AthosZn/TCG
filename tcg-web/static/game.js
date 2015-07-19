@@ -4,6 +4,40 @@ function toggleShow(id) {
     else
         document.getElementById(id).style.display = 'block';
 }
+
+function flipCard (card, div, card_type, name, desc_text, cost, creature_strength, counter) {
+    document.getElementById('sub_card').style.display = 'block';
+    if (counter === null)
+        document.getElementById("card_img").innerHTML = "<img src=\"Card_"+card_type+".png\"></img>"
+    else
+        document.getElementById("card_img").innerHTML = "<img src=\"Card_"+card_type+"_counter.png\"></img>"
+            document.getElementById("card_name").innerHTML = name;
+    document.getElementById("card_desc").innerHTML = desc_text;
+    var i;
+    var costbar="";
+    for (i=0;i<cost;i++){
+        costbar +="<img src=\"Mana.png\"></img>"
+    }
+    document.getElementById("card_cost").innerHTML =costbar ;
+    if (creature_strength){
+        document.getElementById("card_strength").innerHTML = creature_strength;
+        if (counter !== null) {
+            document.getElementById("card_counter").innerHTML = counter;
+        }
+        else {
+            document.getElementById("card_counter").innerHTML = "";
+        }
+    }
+    else if (counter !== null){
+        document.getElementById("card_strength").innerHTML = counter;
+        document.getElementById("card_counter").innerHTML = "";
+    }
+    else {
+        document.getElementById("card_counter").innerHTML = "";
+        document.getElementById("card_strength").innerHTML = "";
+    }
+}
+
 function ajaxSend (url, args) {
     var xmlhttp = new XMLHttpRequest(); 
     xmlhttp.open("POST",url,true);
@@ -54,7 +88,10 @@ function dispManaBar (cur, max){
         manabar += "<img src=\"Mana_empty.png\"></img>";
     return manabar;
 }
+
+
 if ("WebSocket" in window){
+    //var source = new WebSocket("ws://localhost:8888/socket");
     var source = new WebSocket("ws://192.168.0.24:8888/socket");
     //var source = new WebSocket("ws://195.154.45.210:8888/socket");
     source.onmessage = function(event) {
@@ -66,10 +103,9 @@ if ("WebSocket" in window){
                 parse_json.get_killed, parse_json.gid, parse_json.get_target);
             var pstatus = document.getElementById("pstatus");
             var manabar = dispManaBar (parse_json.self_state.cur_mana, parse_json.self_state.max_mana)
-            pstatus.innerHTML = "HP: " + parse_json.self_state.health + manabar
+            pstatus.innerHTML = "<img src=heart-icon.png></img>x" + parse_json.self_state.health + " Mana:" + manabar
             if (parse_json.on_trait && !(parse_json.attackers.length>0)) {
-                pstatus.innerHTML += " <button type=\"button\" onclick=draw("+
-                    parse_json.gid+")>Draw</button><button type=\"button\" onclick=growMana("+
+                pstatus.innerHTML += " <button type=\"button\" onclick=growMana("+
                     parse_json.gid+")>Grow mana</button>";
             }
         }
@@ -79,10 +115,11 @@ if ("WebSocket" in window){
                 parse_json.on_trait, parse_json.attackers, parse_json.blockers, 
                 parse_json.get_killed, parse_json.gid, parse_json.get_target);
             var oppstatus = document.getElementById("oppstatus");
-            opp_status.innerHTML = "Opponent HP: " + parse_json.opp_state.opp_health +
-                                " MP: " + parse_json.opp_state.opp_cur_mana + "/" +
-                                parse_json.opp_state.opp_max_mana +
-                                " hand: " + parse_json.opp_state.opp_hand + " card(s)";
+            var manabar = dispManaBar (parse_json.opp_state.opp_cur_mana, 
+                    parse_json.opp_state.opp_max_mana)
+            opp_status.innerHTML = "<img src=heart-icon.png></img>x"
+                     + parse_json.opp_state.opp_health + " Mana:" +  manabar +
+                                "<br>Hand: " + parse_json.opp_state.opp_hand + " card(s)";
         }
         if ("log" in parse_json){
             var logdiv = document.getElementById("logger");
@@ -127,12 +164,28 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
         var can_activate_item = listname === "items" && main_turn && !can_select
         var can_activate_creature = listname === "creatures" && main_turn && !can_select
         var can_play = listname === "hand" && main_turn && !can_select
-             
-        mytab += "<tr><th>Card</th>";
+
+        if (can_play){
+            mytab += "<button type=\"button\" onclick=draw("+gid+")>Draw</button>"
+        }
+
+        mytab += "<tr>";
+        if (listname === "hand"){
+            mytab += "<th>Cards</th>";
+        }
+        else if (listname === "creatures" || listname === "opp_creatures"){
+            mytab += "<th>Creatures</th>";
+        }
+        else if (listname === "items" || listname === "opp_items"){
+            mytab += "<th>Items</th>";
+        }
+        else if (listname === "graveyard" || listname === "opp_graveyard"){
+            mytab += "<th>Cards</th>";
+        }
         if (listname === "hand"){
             mytab += "<th>Cost</th>";
         }
-        if (listname === "hand" || listname === "creatures" || listname === "opp_creatures"){
+        if (listname === "creatures" || listname === "opp_creatures"){
             mytab += "<th>Strength</th>";
         }
         if (can_play) {
@@ -163,15 +216,25 @@ function disp_pcards (parse_json, targetlist, on_trait, attackers, blockers, get
             if (ctype === "creature")
                 colorcode = "#a0ffa0";
             else if (ctype === "item")
-                colorcode = "#ffffa0";
+                colorcode = "#ffee88";
             else if (ctype === "sorcery")
                 colorcode = "#a0a0ff";
-            mytab += "<tr title=\""+ ctype + ": " + parse_json[listname][item].desc_text +"\"/tr><td style=\"background:"+
+            var div = "self_div";
+            var card = "self_card";
+            if (listname === "opp_items" || listname === "opp_creatures" || listname === "opp_graveyard"){
+                div = "opp_div";
+                card = "opp_card";
+            }
+            mytab += "<tr title=\""+ ctype + ": " + parse_json[listname][item].desc_text +
+                "\"/tr><td onclick=\"flipCard(\'"+card +"\',\'"+div+"\',\'"+ctype+"\',\'"+
+                parse_json[listname][item].name+"\',\'"+parse_json[listname][item].desc_text+
+                "\',\'"+parse_json[listname][item].cost+"\',"+
+                parse_json[listname][item].creature_strength+","+parse_json[listname][item].counter+")\" style=\"background:"+
                 colorcode+"\">" + parse_json[listname][item].name + "</td>";
             if (listname === "hand"){
                 mytab += "<td>" + parse_json[listname][item].cost + "</td>";
             }
-            if (listname === "hand" || listname === "creatures" || listname === "opp_creatures"){
+            if (listname === "creatures" || listname === "opp_creatures"){
                 mytab += "<td>" + (parse_json[listname][item].creature_strength || "--") + "</td>";
             }
             if (can_play){

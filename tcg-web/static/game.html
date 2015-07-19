@@ -5,43 +5,50 @@
 <script src="game.js"></script>
 </head>
 <body>
-    <div style="text-align:center">
-        <div id="opp_status"></div>
-        Opponent creatures:
-        <div id="opp_creatures"></div>
-        <br>
-        Opponent items:
-        <div id="opp_items"></div>
-        <br>
-        <button type="button" onclick="toggleShow('opp_graveyard')">Hide/show graveyard</button>
-        <div id="opp_graveyard" style="display:none"></div>
-        <hr>
-        <div id="pstatus"></div>
-        Hand:
-        <div id="hand"></div>
-        <br>
-        Creatures:
-        <div id="creatures"></div>
-        <br>
-        Items:
-        <div id="items"></div>
-        <br>
-        <button type="button" onclick="toggleShow('graveyard')">Hide/show graveyard</button>
-        <div id="graveyard" style="display:none"></div>
-        <br>
+    <table class="divtable" style="margin-right:auto;margin-left:auto"><tr class="divtable"><td class="divtable" style="background:#ffdddd;">
+        <div id="opp_div" style="width:30vw;height:75vh;overflow:auto;">
+            <div id="opp_status"></div>
+            <br>
+            <div id="opp_creatures"></div>
+            <br>
+            <div id="opp_items"></div>
+            <br>
+            <button type="button" onclick="toggleShow('opp_graveyard')">Show/hide graveyard</button>
+            <div id="opp_graveyard" style="display:none"></div>
+        </div>
+    </td><td class="divtable">
+    <div id="card" style="font-size:0.85em;width:165px;min-height:255px;display:block;margin-left:auto;margin-right:auto;">
+        <div id="sub_card">
+            <div id="card_img" style="position:absolute;"></div>
+            <div id="card_name" style="position:absolute;width:130px; height:25px;z-index:2;margin-top:10px;margin-left:10px"></div>
+            <div id="card_desc" style="position:absolute;width:130px; height:110px;z-index:2;margin-top:122px;margin-left:12px;font-size:0.8em"></div>
+            <div id="card_cost" style="position:absolute;width:70px; height:25px;z-index:2;margin-top:227px;margin-left:12px"></div>
+            <div id="card_strength" style="position:absolute;width:30px; height:25px;z-index:2;margin-top:229px;margin-left:140px"></div>
+            <div id="card_counter" style="position:absolute;width:30px; height:25px;z-index:2;margin-top:229px;margin-left:114px"></div>
+        </div>
+        <div id="logger" class="logger"></div>
     </div>
-    <div id="logger" class="logger"></div>
+    </td><td class="divtable" style="background:#ddddff;">
+        <div id="self_div" style="background:#ddddff;width:30vw;height:75vh;overflow:auto;">
+            <div id="pstatus"></div>
+            <br>
+            <div id="hand"></div>
+            <br>
+            <div id="creatures"></div>
+            <br>
+            <div id="items"></div>
+            <br>
+            <button type="button" onclick="toggleShow('graveyard')">Show/hide graveyard</button>
+            <div id="graveyard" style="display:none"></div>
+        </div>
+    </td></tr><tr><td class="divtable">
+    </td><td class="divtable">
+</td></tr></table>
 <style>
 
-body{
-    background: #ccccff;
-}
-
-
 *{
-    font-family: Tahoma, Geneva, sans-serif;
-    font-size: 17px;
-    font-size: 3vmin;
+    font-family: "Liberation sans", Verdana, sans-serif;
+    font-size: 1em;
 }
 
 table {
@@ -49,22 +56,27 @@ table {
 }
 
 table, td, th {
-    margin-left: auto;
-    margin-right: auto;
     border: 1px solid black;
 }
 
+*.divtable {
+    border: none;
+}
+
+@media only screen and (orientation:portrait){
+    #logger {display:none;}
+}
 div.logger {
-    margin-left: auto;
-    margin-right: auto;
     border: 2px solid #444444;
-    font-size: 12px;
-    font-size: 2.2vmin;
-    width: 45vmin;
+    font-size: 0.7em;
+    width:160px;
     height: 20vmin;
     background: #dddddd;
     overflow: auto;
-    text-align: center;
+    margin-right:auto;
+    margin-left:auto;
+    margin-top:255px;
+    position:absolute;
 }
 </style>
 

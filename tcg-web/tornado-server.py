@@ -63,9 +63,10 @@ class GameCommandHandler (tornado.web.RequestHandler):
     def post(self, *args, **kwargs):
         gameid = int(self.get_argument('gameid'))
         game = GLOBALS['games'][gameid]
-        if self.command (game):
+        if not game.on_trait.extra_turn and self.command (game):
             game.end_turn ()
-        else:
+        else :
+            self.extra_turn = False
             game.send_status ()
     def comnand (self, game):
         return True
@@ -73,6 +74,8 @@ class GameCommandHandler (tornado.web.RequestHandler):
 class PlayHandler(GameCommandHandler):
     def command(self, game):
         if game.on_block : 
+            return False
+        if game.on_trait.silencers :
             return False
         handnum = int(self.get_argument('handnum'))
         card = game.on_trait.hand[handnum]

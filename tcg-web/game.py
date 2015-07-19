@@ -10,16 +10,20 @@ class PlayerState ():
         self.cur_mana = 2
         self.max_mana = 2
         self.armor = 0
+        self.bonus_attack = 0
+        self.extra_turn = False
+        self.silencers = []
         self.creatures = []
         self.items = []
         self.graveyard = []
         self.hand = [play_card_factory (random.randint (0, len (all_card_data)-1), 
-            game_state, self) for i in range (5)]
+            game_state, self) for i in range (7)]
         self.deck = [play_card_factory (random.randint (0, len (all_card_data)-1), 
             game_state, self) for i in range (55)]
 
     def draw (self):
-        self.hand.append (self.deck.pop ())
+        if len (self.hand) < 10:
+            self.hand.append (self.deck.pop ())
 
     def grow_mana (self):
         self.max_mana = min (self.max_mana + 1, 10)
@@ -153,7 +157,7 @@ class Game ():
         for c in attacker_cards :
             a_strength += c.creature_strength
         if a_strength > b_strength:
-            damage = a_strength - b_strength - self.on_block.armor
+            damage = a_strength - b_strength - self.on_block.armor + self.on_trait.bonus_attack
             damage = max (damage, 0)
             self.on_block.health -= damage
             self.log ("You dealt %d damage</br>" % damage, 
@@ -187,7 +191,8 @@ class Game ():
             if self.attackers[i]:
                 attacker_cards += [self.on_trait.creatures [i]]
 
-        a_strength = 0  #Calculate attacking strength
+        a_strength = self.on_trait.bonus_attack
+        #Calculate attacking strength
         for c in attacker_cards :
             a_strength += c.creature_strength 
 
@@ -203,7 +208,7 @@ class Game ():
                     killed_cards += [self.on_block.creatures[i]] #Get sacrificed cards
                 else :
                     strength = self.on_block.creatures[i].creature_strength
-                    strength_delta = min (strength, strength - 1)
+                    strength_delta = min (strength_delta, strength - 1)
             b_strength = 0 #Calculate sacrificed strength
             for c in killed_cards :
                 b_strength += c.creature_strength
