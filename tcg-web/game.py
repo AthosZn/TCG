@@ -91,8 +91,15 @@ class Game ():
         return json.dumps(tempdict)
 
     def send_status (self):
-        self.connection1.write_message(self.dump_state(self.player1))
-        self.connection2.write_message(self.dump_state(self.player2))
+        if self.player1.health <= 0:
+            self.connection1.write_message(json.dumps({"game_over": "lost.html"}))
+            self.connection2.write_message(json.dumps({"game_over": "won.html"}))
+        elif self.player2.health <= 0:
+            self.connection1.write_message(json.dumps({"game_over": "won.html"}))
+            self.connection2.write_message(json.dumps({"game_over": "lost.html"}))
+        else:
+            self.connection1.write_message(self.dump_state(self.player1))
+            self.connection2.write_message(self.dump_state(self.player2))
 
     def log (self, msg_on_trait, msg_other):
         if self.on_trait == self.player1:

@@ -126,6 +126,9 @@ if ("WebSocket" in window){
             logdiv.innerHTML += parse_json.log; 
             logdiv.scrollTop = 100000
         }
+        if ("game_over" in parse_json){
+            window.location.replace (parse_json.game_over);
+        }
     //    if ("require_target" in parse_json) {
     //        var htmltab = document.getElementById (parse_json.require_target);
     //        var table = htmltab.firstChild.firstChild;
